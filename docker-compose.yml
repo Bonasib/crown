@@ -1,0 +1,136 @@
+version: '3.9'
+
+services:
+  # ─── Database ───────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: ronda-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ronda
+      POSTGRES_PASSWORD: ronda_dev_password
+      POSTGRES_DB: ronda_ship
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ronda -d ronda_ship']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis ──────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: ronda-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── API ────────────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: ronda-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://ronda:ronda_dev_password@postgres:5432/ronda_ship
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: change_me_in_production_min_32_chars
+      PORT: 4000
+      CORS_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003
+    ports:
+      - '4000:4000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ─── Worker ─────────────────────────────────────────────────────────────────
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    container_name: ronda-worker
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://ronda:ronda_dev_password@postgres:5432/ronda_ship
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ─── Web Apps ────────────────────────────────────────────────────────────────
+  web-saas:
+    build:
+      context: .
+      dockerfile: apps/web-saas/Dockerfile
+    container_name: ronda-web-saas
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://api:4000
+    ports:
+      - '3000:3000'
+    depends_on:
+      - api
+
+  web-erp:
+    build:
+      context: .
+      dockerfile: apps/web-erp/Dockerfile
+    container_name: ronda-web-erp
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://api:4000
+    ports:
+      - '3001:3001'
+    depends_on:
+      - api
+
+  web-crm:
+    build:
+      context: .
+      dockerfile: apps/web-crm/Dockerfile
+    container_name: ronda-web-crm
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://api:4000
+    ports:
+      - '3002:3002'
+    depends_on:
+      - api
+
+  web-admin:
+    build:
+      context: .
+      dockerfile: apps/web-admin/Dockerfile
+    container_name: ronda-web-admin
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://api:4000
+    ports:
+      - '3003:3003'
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+  redis_data:

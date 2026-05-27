@@ -1,0 +1,33 @@
+{
+  "name": "@ronda/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc --outDir dist",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "fastify": "^4.29.0",
+    "@fastify/cors": "^9.0.0",
+    "@fastify/helmet": "^11.1.0",
+    "@fastify/rate-limit": "^9.1.0",
+    "@trpc/server": "^10.45.2",
+    "zod": "^3.24.0",
+    "jsonwebtoken": "^9.0.0",
+    "bcryptjs": "^2.4.3",
+    "ioredis": "^5.3.0",
+    "@ronda/db": "workspace:*",
+    "@ronda/types": "workspace:*",
+    "@ronda/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/jsonwebtoken": "^9.0.0",
+    "@types/bcryptjs": "^2.4.0",
+    "typescript": "^5.7.0",
+    "tsx": "^4.19.0",
+    "@ronda/config": "workspace:*"
+  }
+}

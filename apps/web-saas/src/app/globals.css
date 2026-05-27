@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── web-saas: Teal Theme ──────────────────────────────────────────────── */
+:root {
+  /* Primary: Teal #0D9488 */
+  --primary: 175 84% 32%;
+  --primary-foreground: 0 0% 100%;
+
+  /* Accent: Amber */
+  --accent: 43 96% 56%;
+  --accent-foreground: 26 83% 14%;
+
+  /* Background: clean white */
+  --background: 0 0% 100%;
+  --foreground: 222 84% 5%;
+
+  /* Cards */
+  --card: 0 0% 100%;
+  --card-foreground: 222 84% 5%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 84% 5%;
+
+  /* UI tokens */
+  --secondary: 174 60% 95%;
+  --secondary-foreground: 175 84% 20%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 175 84% 32%;
+  --radius: 0.5rem;
+
+  /* Sidebar */
+  --sidebar-background: 174 100% 97%;
+  --sidebar-foreground: 175 60% 20%;
+  --sidebar-primary: 175 84% 32%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 174 60% 92%;
+  --sidebar-accent-foreground: 175 60% 20%;
+  --sidebar-border: 174 40% 88%;
+  --sidebar-ring: 175 84% 32%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}

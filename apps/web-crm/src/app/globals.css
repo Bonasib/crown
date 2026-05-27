@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── web-crm: Amber/Coral Theme ────────────────────────────────────────── */
+:root {
+  /* Primary: Amber #D97706 */
+  --primary: 38 92% 50%;
+  --primary-foreground: 0 0% 100%;
+
+  /* Accent: Rose/Coral */
+  --accent: 347 77% 50%;
+  --accent-foreground: 0 0% 100%;
+
+  /* Background: warm white */
+  --background: 36 33% 99%;
+  --foreground: 24 10% 10%;
+
+  /* Cards */
+  --card: 0 0% 100%;
+  --card-foreground: 24 10% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 24 10% 10%;
+
+  /* UI tokens */
+  --secondary: 36 33% 94%;
+  --secondary-foreground: 38 92% 30%;
+  --muted: 36 20% 95%;
+  --muted-foreground: 24 10% 45%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 36 20% 88%;
+  --input: 36 20% 88%;
+  --ring: 38 92% 50%;
+  --radius: 0.5rem;
+
+  /* Sidebar */
+  --sidebar-background: 36 33% 97%;
+  --sidebar-foreground: 24 10% 25%;
+  --sidebar-primary: 38 92% 50%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 36 30% 92%;
+  --sidebar-accent-foreground: 24 10% 20%;
+  --sidebar-border: 36 20% 86%;
+  --sidebar-ring: 38 92% 50%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}

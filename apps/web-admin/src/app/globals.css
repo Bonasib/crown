@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── web-admin: Deep Purple Theme ──────────────────────────────────────── */
+:root {
+  /* Primary: Deep Purple #4C1D95 (violet-900) */
+  --primary: 263 80% 35%;
+  --primary-foreground: 0 0% 100%;
+
+  /* Accent: Violet */
+  --accent: 263 70% 60%;
+  --accent-foreground: 0 0% 100%;
+
+  /* Background: neutral-50 */
+  --background: 0 0% 98%;
+  --foreground: 0 0% 9%;
+
+  /* Cards */
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 9%;
+
+  /* UI tokens */
+  --secondary: 263 30% 94%;
+  --secondary-foreground: 263 80% 35%;
+  --muted: 263 10% 95%;
+  --muted-foreground: 263 10% 45%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 263 10% 88%;
+  --input: 263 10% 88%;
+  --ring: 263 80% 35%;
+  --radius: 0.5rem;
+
+  /* Sidebar — deep purple */
+  --sidebar-background: 263 80% 20%;
+  --sidebar-foreground: 263 30% 85%;
+  --sidebar-primary: 263 70% 60%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 263 70% 28%;
+  --sidebar-accent-foreground: 263 30% 92%;
+  --sidebar-border: 263 60% 25%;
+  --sidebar-ring: 263 70% 60%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}

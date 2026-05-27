@@ -1,0 +1,1045 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum AccountingCategory {
+  COGS
+  OPEX
+  DUTY_VAT
+  MARGIN
+}
+
+enum FreightMode {
+  LCL
+  FCL
+  AIR
+  MULTIMODAL
+  RAIL
+}
+
+enum ContainerType {
+  TWENTY_FT
+  FORTY_FT
+  FORTY_FT_HC
+  REEFER_40FT
+  FLAT_RACK_40FT
+  OPEN_TOP_20FT
+}
+
+enum GoodsType {
+  GENERAL
+  HAZARDOUS
+  PERISHABLE
+  FRAGILE_HIGH_VALUE
+  AUTOMOTIVE
+  TEXTILES
+  MACHINERY
+  ELECTRONICS
+  FOOD
+  CHEMICALS
+  FURNITURE
+  COSMETICS
+  MEDICAL_PHARMA
+  CONSTRUCTION
+  AGRICULTURAL
+  ENERGY_SOLAR
+}
+
+enum ShipmentStatus {
+  DRAFT
+  QUOTED
+  BOOKED
+  CARGO_RECEIVED
+  INSPECTED
+  STUFFED
+  CUSTOMS_EXPORT
+  IN_TRANSIT
+  TRANSHIPMENT
+  CUSTOMS_IMPORT
+  ARRIVED
+  DELIVERED
+  CLOSED
+  ON_HOLD
+  CANCELLED
+  EXCEPTION
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  OPS_MANAGER
+  OPS_AGENT
+  FINANCE
+  SALES_REP
+  SALES_MANAGER
+  INSPECTOR
+  SUPPORT
+  READ_ONLY_AUDITOR
+  ORG_OWNER
+  ORG_ADMIN
+  BOOKER
+  VIEWER
+  ACCOUNTANT
+}
+
+enum DealStage {
+  NEW
+  QUALIFIED
+  QUOTED
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum Market {
+  FBA_US
+  FBA_EU
+  FBA_UK
+  FBA_SA
+  NOON_SA
+  NOON_UAE
+  NOON_EG
+}
+
+enum DocumentType {
+  COMMERCIAL_INVOICE
+  PACKING_LIST
+  BILL_OF_LADING
+  COO
+  INSPECTION_REPORT
+  MSDS
+  DG_DECLARATION
+  PHYTOSANITARY
+  FNSKU_LABEL
+  CARTON_LABEL
+  PALLET_LABEL
+}
+
+enum DocumentStatus {
+  REQUIRED
+  UPLOADED
+  APPROVED
+  REJECTED
+  GENERATED
+}
+
+enum InspectionStage {
+  FACTORY
+  PRODUCTION
+  QC
+  PACKAGING
+  LOADING
+  SEAL
+}
+
+enum ActivityType {
+  CALL
+  EMAIL
+  WHATSAPP
+  MEETING
+  TASK
+  NOTE
+}
+
+enum TrackingSource {
+  MANUAL
+  CARRIER_API
+  SYSTEM
+}
+
+enum LedgerEntryType {
+  DEBIT
+  CREDIT
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  PARTIALLY_PAID
+  OVERDUE
+  VOID
+}
+
+enum PaymentMethod {
+  STRIPE_CARD
+  BANK_TRANSFER
+  CASH
+}
+
+// ─── Core Identity ─────────────────────────────────────────────────────────────
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  logoUrl     String?
+  country     String?
+  taxId       String?
+  planId      String?
+  isActive    Boolean  @default(true)
+  isSuspended Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members       Membership[]
+  quotes        Quote[]
+  shipments     Shipment[]
+  invoices      Invoice[]
+  suppliers     Supplier[]
+  contacts      Contact[]
+  leads         Lead[]
+  deals         Deal[]
+  documents     Document[]
+  notifications Notification[]
+  apiKeys       ApiKey[]
+  settings      Setting[]
+
+  @@map("organizations")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  passwordHash  String
+  firstName     String
+  lastName      String
+  avatarUrl     String?
+  phone         String?
+  preferredLang String    @default("en")
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  memberships      Membership[]
+  refreshTokens    RefreshToken[]
+  auditLogs        AuditLog[]
+  inspectionPhotos InspectionPhoto[]
+  trackingEvents   TrackingEvent[]
+  activities       Activity[]
+  assignedLeads    Lead[]            @relation("AssignedLeads")
+  assignedDeals    Deal[]            @relation("AssignedDeals")
+
+  @@map("users")
+}
+
+model Membership {
+  id             String     @id @default(cuid())
+  userId         String
+  organizationId String
+  roles          UserRole[]
+  isOwner        Boolean    @default(false)
+  invitedAt      DateTime?
+  joinedAt       DateTime?
+  createdAt      DateTime   @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@map("memberships")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model Permission {
+  id          String  @id @default(cuid())
+  resource    String
+  action      String
+  description String?
+
+  @@unique([resource, action])
+  @@map("permissions")
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  actorId        String?
+  organizationId String?
+  action         String
+  resource       String
+  resourceId     String?
+  before         Json?
+  after          Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id])
+
+  @@index([actorId])
+  @@index([organizationId])
+  @@index([resource, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model ApiKey {
+  id             String    @id @default(cuid())
+  organizationId String
+  name           String
+  keyHash        String    @unique
+  lastUsedAt     DateTime?
+  expiresAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+}
+
+// ─── Global Reference Data ─────────────────────────────────────────────────────
+
+model Port {
+  id       String  @id @default(cuid())
+  code     String  @unique
+  name     String
+  country  String
+  lat      Float?
+  lng      Float?
+  isOrigin Boolean @default(false)
+  isDest   Boolean @default(false)
+  isActive Boolean @default(true)
+
+  originLanes    TradeLane[]      @relation("OriginPort")
+  destLanes      TradeLane[]      @relation("DestPort")
+  originSailings VesselSchedule[] @relation("OriginSailing")
+  destSailings   VesselSchedule[] @relation("DestSailing")
+
+  @@map("ports")
+}
+
+model Carrier {
+  id       String  @id @default(cuid())
+  name     String
+  scac     String? @unique
+  logoUrl  String?
+  isActive Boolean @default(true)
+
+  schedules VesselSchedule[]
+  ratecards RateCard[]
+
+  @@map("carriers")
+}
+
+model VesselSchedule {
+  id             String    @id @default(cuid())
+  carrierId      String
+  originPortId   String
+  destPortId     String
+  etd            DateTime
+  eta            DateTime
+  vesselName     String?
+  voyageNumber   String?
+  serviceCode    String?
+  spaceAvailable Int?
+  cutoffDate     DateTime?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+
+  carrier    Carrier @relation(fields: [carrierId], references: [id])
+  originPort Port    @relation("OriginSailing", fields: [originPortId], references: [id])
+  destPort   Port    @relation("DestSailing", fields: [destPortId], references: [id])
+
+  @@map("vessel_schedules")
+}
+
+model TradeLane {
+  id           String      @id @default(cuid())
+  originPortId String
+  destPortId   String
+  mode         FreightMode
+  transitDays  Int?
+  isActive     Boolean     @default(true)
+
+  originPort Port       @relation("OriginPort", fields: [originPortId], references: [id])
+  destPort   Port       @relation("DestPort", fields: [destPortId], references: [id])
+  ratecards  RateCard[]
+
+  @@unique([originPortId, destPortId, mode])
+  @@map("trade_lanes")
+}
+
+model RateCard {
+  id            String         @id @default(cuid())
+  tradeLaneId   String?
+  carrierId     String?
+  mode          FreightMode
+  containerType ContainerType?
+  currency      String         @default("USD")
+  baseRateMinor Int
+  validFrom     DateTime
+  validTo       DateTime
+  version       Int            @default(1)
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  tradeLane  TradeLane?  @relation(fields: [tradeLaneId], references: [id])
+  carrier    Carrier?    @relation(fields: [carrierId], references: [id])
+  surcharges Surcharge[]
+
+  @@map("rate_cards")
+}
+
+model Surcharge {
+  id                 String             @id @default(cuid())
+  rateCardId         String?
+  name               String
+  code               String
+  description        String?
+  accountingCategory AccountingCategory
+  amountMinor        Int?
+  pct                Float?
+  currency           String             @default("USD")
+  isActive           Boolean            @default(true)
+
+  rateCard RateCard? @relation(fields: [rateCardId], references: [id])
+
+  @@map("surcharges")
+}
+
+model FxRate {
+  id           String   @id @default(cuid())
+  fromCurrency String
+  toCurrency   String
+  rate         Float
+  source       String?
+  recordedAt   DateTime @default(now())
+
+  @@index([fromCurrency, toCurrency, recordedAt])
+  @@map("fx_rates")
+}
+
+// ─── Quote & Booking ───────────────────────────────────────────────────────────
+
+model Quote {
+  id              String      @id @default(cuid())
+  organizationId  String
+  version         Int         @default(1)
+  status          String      @default("DRAFT")
+  mode            FreightMode
+  originPortCode  String
+  destPortCode    String
+  goodsType       GoodsType
+  cargoValueMinor Int
+  currency        String      @default("USD")
+  totalMinor      Int         @default(0)
+  rateLockExpiry  DateTime?
+  sentAt          DateTime?
+  acceptedAt      DateTime?
+  notes           String?
+  dealId          String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  organization Organization    @relation(fields: [organizationId], references: [id])
+  lineItems    QuoteLineItem[]
+  booking      Booking?
+  cargos       CargoItem[]
+  manifest     Manifest?
+  deal         Deal?           @relation(fields: [dealId], references: [id])
+
+  @@index([organizationId])
+  @@map("quotes")
+}
+
+model QuoteLineItem {
+  id                 String             @id @default(cuid())
+  quoteId            String
+  description        String
+  accountingCategory AccountingCategory
+  amountMinor        Int
+  currency           String             @default("USD")
+  rate               Float?
+  baseMinor          Int?
+  sortOrder          Int                @default(0)
+
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@map("quote_line_items")
+}
+
+model CargoItem {
+  id          String    @id @default(cuid())
+  quoteId     String?
+  manifestId  String?
+  sku         String?
+  description String?
+  lengthCm    Float
+  widthCm     Float
+  heightCm    Float
+  weightKg    Float
+  qty         Int
+  hsCode      String?
+  valueMinor  Int
+  currency    String    @default("USD")
+  goodsType   GoodsType @default(GENERAL)
+
+  quote    Quote?    @relation(fields: [quoteId], references: [id])
+  manifest Manifest? @relation(fields: [manifestId], references: [id])
+
+  @@map("cargo_items")
+}
+
+model Manifest {
+  id            String   @id @default(cuid())
+  quoteId       String?  @unique
+  shipmentId    String?  @unique
+  totalCbm      Float
+  totalWeightKg Float
+  createdAt     DateTime @default(now())
+
+  quote       Quote?      @relation(fields: [quoteId], references: [id])
+  shipment    Shipment?   @relation(fields: [shipmentId], references: [id])
+  items       CargoItem[]
+  packingPlan PackingPlan?
+
+  @@map("manifests")
+}
+
+model PackingPlan {
+  id                String        @id @default(cuid())
+  manifestId        String        @unique
+  containerType     ContainerType
+  placements        Json
+  remainingSpaceCbm Float
+  utilizationPct    Float
+  warnings          String[]
+  createdAt         DateTime      @default(now())
+
+  manifest Manifest @relation(fields: [manifestId], references: [id])
+
+  @@map("packing_plans")
+}
+
+// ─── Shipment Lifecycle ────────────────────────────────────────────────────────
+
+model Booking {
+  id                  String    @id @default(cuid())
+  quoteId             String    @unique
+  organizationId      String
+  incoterms           String?
+  requestedEtd        DateTime?
+  scheduledId         String?
+  notifyParty         String?
+  consignee           String?
+  shipper             String?
+  specialInstructions String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  quote    Quote    @relation(fields: [quoteId], references: [id])
+  shipment Shipment?
+
+  @@map("bookings")
+}
+
+model Shipment {
+  id             String         @id @default(cuid())
+  bookingId      String?        @unique
+  organizationId String
+  status         ShipmentStatus @default(DRAFT)
+  mode           FreightMode
+  originPortCode String
+  destPortCode   String
+  etd            DateTime?
+  eta            DateTime?
+  atd            DateTime?
+  ata            DateTime?
+  blNumber       String?
+  sealNumber     String?
+  grossWeightKg  Float?
+  netWeightKg    Float?
+  totalCbm       Float?
+  notes          String?
+  isOnHold       Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  booking          Booking?               @relation(fields: [bookingId], references: [id])
+  organization     Organization           @relation(fields: [organizationId], references: [id])
+  containers       ContainerAssignment[]
+  trackingEvents   TrackingEvent[]
+  milestones       Milestone[]
+  documents        Document[]
+  inspectionReport InspectionReport?
+  invoices         Invoice[]
+  manifest         Manifest?
+  complianceChecks ComplianceCheck[]
+  fulfillmentPlan  FulfillmentShipmentPlan?
+
+  @@index([organizationId])
+  @@index([status])
+  @@map("shipments")
+}
+
+model ContainerAssignment {
+  id              String        @id @default(cuid())
+  shipmentId      String
+  containerType   ContainerType
+  containerNumber String?
+  sealNumber      String?
+  grossWeightKg   Float?
+  netWeightKg     Float?
+  cbm             Float?
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+
+  @@map("container_assignments")
+}
+
+model TrackingEvent {
+  id            String         @id @default(cuid())
+  shipmentId    String
+  timestamp     DateTime
+  status        ShipmentStatus
+  description   String
+  locationLat   Float?
+  locationLng   Float?
+  locationLabel String?
+  source        TrackingSource @default(MANUAL)
+  addedById     String?
+  createdAt     DateTime       @default(now())
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+  addedBy  User?    @relation(fields: [addedById], references: [id])
+
+  @@index([shipmentId])
+  @@map("tracking_events")
+}
+
+model Milestone {
+  id          String    @id @default(cuid())
+  shipmentId  String
+  name        String
+  dueAt       DateTime?
+  completedAt DateTime?
+  order       Int
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+
+  @@map("milestones")
+}
+
+// ─── Inspection ────────────────────────────────────────────────────────────────
+
+model InspectionReport {
+  id          String    @id @default(cuid())
+  shipmentId  String    @unique
+  inspectorId String?
+  supplierId  String?
+  scheduledAt DateTime?
+  conductedAt DateTime?
+  verdict     String?
+  notes       String?
+  passedAll   Boolean?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  shipment    Shipment               @relation(fields: [shipmentId], references: [id])
+  photos      InspectionPhoto[]
+  checkpoints InspectionCheckpoint[]
+
+  @@map("inspection_reports")
+}
+
+model InspectionPhoto {
+  id          String          @id @default(cuid())
+  reportId    String
+  inspectorId String?
+  stage       InspectionStage
+  fileUrl     String
+  fileKey     String
+  sha256Hash  String
+  caption     String?
+  gpsLat      Float?
+  gpsLng      Float?
+  deviceInfo  String?
+  capturedAt  DateTime
+  uploadedAt  DateTime        @default(now())
+
+  report    InspectionReport @relation(fields: [reportId], references: [id])
+  inspector User?            @relation(fields: [inspectorId], references: [id])
+
+  @@map("inspection_photos")
+}
+
+model InspectionCheckpoint {
+  id          String   @id @default(cuid())
+  reportId    String
+  name        String
+  description String?
+  passed      Boolean?
+  notes       String?
+  order       Int
+
+  report InspectionReport @relation(fields: [reportId], references: [id])
+
+  @@map("inspection_checkpoints")
+}
+
+// ─── Documents & Compliance ────────────────────────────────────────────────────
+
+model Document {
+  id             String         @id @default(cuid())
+  organizationId String
+  shipmentId     String?
+  type           DocumentType
+  status         DocumentStatus @default(REQUIRED)
+  version        Int            @default(1)
+  fileUrl        String?
+  fileKey        String?
+  fileName       String?
+  fileSizeBytes  Int?
+  notes          String?
+  uploadedAt     DateTime?
+  approvedAt     DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  shipment     Shipment?    @relation(fields: [shipmentId], references: [id])
+
+  @@map("documents")
+}
+
+model ComplianceCheck {
+  id         String     @id @default(cuid())
+  shipmentId String
+  market     Market?
+  goodsType  GoodsType?
+  passed     Boolean
+  errors     String[]
+  warnings   String[]
+  checkedAt  DateTime   @default(now())
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+
+  @@map("compliance_checks")
+}
+
+model ComplianceRule {
+  id           String       @id @default(cuid())
+  market       Market?
+  goodsType    GoodsType?
+  documentType DocumentType
+  description  String
+  isBlocking   Boolean      @default(true)
+  rule         String?
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@map("compliance_rules")
+}
+
+// ─── Finance ───────────────────────────────────────────────────────────────────
+
+model Account {
+  id          String  @id @default(cuid())
+  code        String  @unique
+  name        String
+  type        String
+  description String?
+  isActive    Boolean @default(true)
+
+  debitEntries  LedgerEntry[]   @relation("DebitAccount")
+  creditEntries LedgerEntry[]   @relation("CreditAccount")
+  lineItems     InvoiceLineItem[]
+
+  @@map("accounts")
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  organizationId String
+  shipmentId     String?
+  number         String        @unique
+  status         InvoiceStatus @default(DRAFT)
+  currency       String        @default("USD")
+  subtotalMinor  Int
+  taxMinor       Int           @default(0)
+  totalMinor     Int
+  dueDate        DateTime?
+  issuedAt       DateTime?
+  paidAt         DateTime?
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organization  Organization      @relation(fields: [organizationId], references: [id])
+  shipment      Shipment?         @relation(fields: [shipmentId], references: [id])
+  lineItems     InvoiceLineItem[]
+  payments      Payment[]
+  ledgerEntries LedgerEntry[]
+
+  @@index([organizationId])
+  @@map("invoices")
+}
+
+model InvoiceLineItem {
+  id                 String             @id @default(cuid())
+  invoiceId          String
+  accountId          String?
+  description        String
+  accountingCategory AccountingCategory
+  qty                Int                @default(1)
+  unitPriceMinor     Int
+  totalMinor         Int
+  currency           String             @default("USD")
+
+  invoice Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  account Account? @relation(fields: [accountId], references: [id])
+
+  @@map("invoice_line_items")
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  invoiceId       String
+  method          PaymentMethod
+  amountMinor     Int
+  currency        String        @default("USD")
+  reference       String?
+  stripePaymentId String?
+  status          String        @default("PENDING")
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+
+  @@map("payments")
+}
+
+model LedgerEntry {
+  id              String   @id @default(cuid())
+  invoiceId       String?
+  debitAccountId  String
+  creditAccountId String
+  amountMinor     Int
+  currency        String   @default("USD")
+  description     String?
+  postedAt        DateTime @default(now())
+
+  invoice       Invoice? @relation(fields: [invoiceId], references: [id])
+  debitAccount  Account  @relation("DebitAccount", fields: [debitAccountId], references: [id])
+  creditAccount Account  @relation("CreditAccount", fields: [creditAccountId], references: [id])
+
+  @@map("ledger_entries")
+}
+
+// ─── CRM ───────────────────────────────────────────────────────────────────────
+
+model Contact {
+  id             String   @id @default(cuid())
+  organizationId String
+  firstName      String
+  lastName       String
+  email          String?
+  phone          String?
+  company        String?
+  position       String?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  leads        Lead[]
+  activities   Activity[]
+
+  @@index([organizationId])
+  @@map("contacts")
+}
+
+model Lead {
+  id             String    @id @default(cuid())
+  organizationId String
+  contactId      String?
+  assignedToId   String?
+  source         String?
+  status         String    @default("NEW")
+  notes          String?
+  convertedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  contact      Contact?     @relation(fields: [contactId], references: [id])
+  assignedTo   User?        @relation("AssignedLeads", fields: [assignedToId], references: [id])
+  deals        Deal[]
+
+  @@index([organizationId])
+  @@map("leads")
+}
+
+model Deal {
+  id              String    @id @default(cuid())
+  organizationId  String
+  leadId          String?
+  assignedToId    String?
+  title           String
+  stage           DealStage @default(NEW)
+  valueMinor      Int?
+  currency        String    @default("USD")
+  expectedCloseAt DateTime?
+  probability     Float?
+  originLane      String?
+  notes           String?
+  wonAt           DateTime?
+  lostAt          DateTime?
+  lostReason      String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  lead         Lead?        @relation(fields: [leadId], references: [id])
+  assignedTo   User?        @relation("AssignedDeals", fields: [assignedToId], references: [id])
+  activities   Activity[]
+  quotes       Quote[]
+
+  @@index([organizationId])
+  @@map("deals")
+}
+
+model Activity {
+  id             String       @id @default(cuid())
+  organizationId String?
+  userId         String?
+  contactId      String?
+  dealId         String?
+  type           ActivityType
+  subject        String
+  body           String?
+  dueAt          DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime     @default(now())
+
+  user    User?    @relation(fields: [userId], references: [id])
+  contact Contact? @relation(fields: [contactId], references: [id])
+  deal    Deal?    @relation(fields: [dealId], references: [id])
+
+  @@map("activities")
+}
+
+// ─── Fulfillment ───────────────────────────────────────────────────────────────
+
+model FulfillmentDestination {
+  id       String  @id @default(cuid())
+  market   Market
+  fcCode   String
+  name     String
+  address  String?
+  country  String?
+  isActive Boolean @default(true)
+
+  plans FulfillmentShipmentPlan[]
+
+  @@map("fulfillment_destinations")
+}
+
+model FulfillmentShipmentPlan {
+  id            String  @id @default(cuid())
+  shipmentId    String  @unique
+  destinationId String
+  status        String  @default("PLANNED")
+  notes         String?
+
+  shipment    Shipment               @relation(fields: [shipmentId], references: [id])
+  destination FulfillmentDestination @relation(fields: [destinationId], references: [id])
+
+  @@map("fulfillment_shipment_plans")
+}
+
+// ─── Supplier ─────────────────────────────────────────────────────────────────
+
+model Supplier {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  country        String?
+  city           String?
+  contactName    String?
+  contactEmail   String?
+  contactPhone   String?
+  notes          String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@map("suppliers")
+}
+
+// ─── System ────────────────────────────────────────────────────────────────────
+
+model Notification {
+  id             String    @id @default(cuid())
+  organizationId String
+  userId         String?
+  type           String
+  title          String
+  body           String?
+  data           Json?
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, userId])
+  @@map("notifications")
+}
+
+model FeatureFlag {
+  id             String  @id @default(cuid())
+  key            String  @unique
+  description    String?
+  isEnabled      Boolean @default(false)
+  organizationId String?
+
+  @@map("feature_flags")
+}
+
+model Setting {
+  id             String  @id @default(cuid())
+  organizationId String?
+  key            String
+  value          String
+  isPublic       Boolean @default(false)
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, key])
+  @@map("settings")
+}
+
+model WebhookSubscription {
+  id             String   @id @default(cuid())
+  organizationId String
+  url            String
+  events         String[]
+  secret         String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  @@map("webhook_subscriptions")
+}
