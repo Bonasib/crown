@@ -1,0 +1,11 @@
+{
+  "name": "@ronda/config",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./typescript": "./typescript.json",
+    "./next": "./next.json",
+    "./eslint": "./eslint.js",
+    "./tailwind": "./tailwind.js"
+  }
+}

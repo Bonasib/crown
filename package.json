@@ -1,0 +1,27 @@
+{
+  "name": "ronda-ship",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "db:push": "pnpm --filter @ronda/db db:push",
+    "db:seed": "pnpm --filter @ronda/db db:seed",
+    "db:migrate": "pnpm --filter @ronda/db db:migrate"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "prettier": "^3.4.0",
+    "eslint": "^9.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.0"
+}

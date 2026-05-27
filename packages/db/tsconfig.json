@@ -1,0 +1,7 @@
+{
+  "extends": "@ronda/config/typescript",
+  "compilerOptions": {
+    "outDir": "dist"
+  },
+  "include": ["src", "prisma"]
+}
