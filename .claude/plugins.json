@@ -1,0 +1,66 @@
+{
+  "marketplaces": [
+    {
+      "name": "ruflo",
+      "source": "ruvnet/ruflo",
+      "url": "https://github.com/ruvnet/ruflo",
+      "addedAt": "2026-06-02T00:00:00Z"
+    }
+  ],
+  "installed": [
+    {
+      "name": "ruflo-core",
+      "marketplace": "ruflo",
+      "version": "latest",
+      "installedAt": "2026-06-02T00:00:00Z",
+      "provides": {
+        "agents": ["coder", "researcher", "reviewer", "witness-curator"],
+        "commands": ["ruflo-status", "witness"],
+        "skills": ["discover-plugins", "init-project", "ruflo-doctor", "witness"]
+      }
+    },
+    {
+      "name": "ruflo-swarm",
+      "marketplace": "ruflo",
+      "version": "latest",
+      "installedAt": "2026-06-02T00:00:00Z",
+      "provides": {
+        "agents": ["architect", "coordinator"],
+        "commands": ["swarm", "watch"],
+        "skills": ["monitor-stream", "swarm-init"]
+      }
+    },
+    {
+      "name": "ruflo-rag-memory",
+      "marketplace": "ruflo",
+      "version": "latest",
+      "installedAt": "2026-06-02T00:00:00Z",
+      "provides": {
+        "agents": ["memory-specialist"],
+        "commands": ["recall", "ruflo-memory"],
+        "skills": ["memory-bridge", "memory-search"]
+      }
+    },
+    {
+      "name": "ruflo-neural-trader",
+      "marketplace": "ruflo",
+      "version": "latest",
+      "installedAt": "2026-06-02T00:00:00Z",
+      "provides": {
+        "agents": ["backtest-engineer", "market-analyst", "risk-analyst", "trading-strategist"],
+        "commands": ["trader"],
+        "skills": [
+          "trader-backtest",
+          "trader-cloud-backtest",
+          "trader-explain",
+          "trader-portfolio-cg",
+          "trader-portfolio",
+          "trader-regime",
+          "trader-risk",
+          "trader-signal",
+          "trader-train"
+        ]
+      }
+    }
+  ]
+}
