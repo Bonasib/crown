@@ -23,6 +23,7 @@ import {
   XCircle,
   BarChart3,
   Key,
+  BookOpen,
 } from 'lucide-react';
 
 type OrgRow = {
@@ -71,6 +72,7 @@ export default function AdminHome() {
             { href: '/api-keys', label: 'API Keys', icon: Key },
             { href: '/audit-log', label: 'Audit Log', icon: Activity },
             { href: '/database', label: 'Database', icon: Database },
+            { href: '/security-tools', label: 'Security Tools', icon: BookOpen },
             { href: '/settings', label: 'Settings', icon: Settings },
           ].map((item) => (
             <Link
