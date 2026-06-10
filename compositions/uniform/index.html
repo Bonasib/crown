@@ -1,0 +1,624 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    @font-face {
+      font-family: 'Barlow';
+      font-style: normal;
+      font-weight: 300;
+      src: url('assets/fonts/barlow-300.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Barlow';
+      font-style: italic;
+      font-weight: 300;
+      src: url('assets/fonts/barlow-300-italic.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Barlow';
+      font-style: normal;
+      font-weight: 500;
+      src: url('assets/fonts/barlow-500.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Barlow Condensed';
+      font-style: normal;
+      font-weight: 700;
+      src: url('assets/fonts/barlow-condensed-700.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Barlow Condensed';
+      font-style: normal;
+      font-weight: 800;
+      src: url('assets/fonts/barlow-condensed-800.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Cairo';
+      font-style: normal;
+      font-weight: 700;
+      src: url('assets/fonts/cairo-700-arabic.woff2') format('woff2');
+      unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+    }
+    @font-face {
+      font-family: 'Cairo';
+      font-style: normal;
+      font-weight: 700;
+      src: url('assets/fonts/cairo-700-latin.woff2') format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    [data-composition-id="root"] {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: #F4F2EF;
+      font-family: 'Barlow', sans-serif;
+    }
+
+    /* ── Persistent background layer ── */
+    .bg-hatch {
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 30px,
+        rgba(200, 30, 30, 0.04) 30px,
+        rgba(200, 30, 30, 0.04) 32px
+      );
+      pointer-events: none;
+    }
+    .bg-bar-top {
+      position: absolute;
+      top: 0; left: 0;
+      height: 5px; width: 100%;
+      background: linear-gradient(to right, #C82020, #8A1010 55%, transparent 100%);
+    }
+    .bg-bar-left {
+      position: absolute;
+      top: 0; left: 0;
+      width: 5px; height: 100%;
+      background: linear-gradient(to bottom, #C82020, #8A1010 55%, transparent 100%);
+    }
+
+    /* ══════════════════════════════════════
+       SCENE 1
+    ══════════════════════════════════════ */
+    #scene1 {
+      position: absolute;
+      inset: 0;
+      display: flex;
+    }
+
+    /* Left: man photo zone */
+    .man-zone {
+      position: relative;
+      width: 810px;
+      height: 1080px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .man-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+    }
+
+    /* Polo shirt composited over the man's torso.
+       mix-blend-mode: multiply makes the white background transparent,
+       so only the collar shape and shirt structure show through. */
+    .polo-overlay {
+      position: absolute;
+      top: 105px;
+      left: -48px;
+      width: 900px;
+      height: auto;
+      mix-blend-mode: multiply;
+      opacity: 0;           /* animated in by GSAP */
+      pointer-events: none;
+    }
+
+    /* Ronda logo badge positioned on left chest (viewer's right).
+       Multiply blend makes the white bg transparent so the red logo
+       appears directly on the white shirt — like a printed badge. */
+    .logo-chest {
+      position: absolute;
+      top: 298px;
+      left: 484px;
+      width: 90px;
+      height: auto;
+      mix-blend-mode: multiply;
+      opacity: 0;           /* animated in by GSAP */
+      pointer-events: none;
+    }
+
+    /* Soft gradient to blend photo edge into content zone */
+    .man-edge-fade {
+      position: absolute;
+      top: 0; right: 0;
+      width: 220px; height: 100%;
+      background: linear-gradient(to right, transparent, #F4F2EF);
+      pointer-events: none;
+    }
+
+    /* Vertical accent rule between photo and content */
+    .vert-rule {
+      position: absolute;
+      left: 810px;
+      top: 130px;
+      width: 2px;
+      height: 820px;
+      background: linear-gradient(to bottom, transparent, #C82020 12%, #C82020 88%, transparent);
+      transform-origin: top center;
+    }
+
+    /* Right: content zone */
+    .content-zone {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px 110px 80px 62px;
+    }
+
+    /* Ghost "R" — large faded background letter */
+    .ghost-r {
+      position: absolute;
+      top: -90px; right: -50px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 700px;
+      font-weight: 900;
+      color: rgba(200, 30, 30, 0.038);
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .ronda-logo-img {
+      width: 128px;
+      height: auto;
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.30em;
+      text-transform: uppercase;
+      color: #C82020;
+      margin-bottom: 14px;
+    }
+
+    .brand-name-en {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 112px;
+      font-weight: 800;
+      line-height: 0.87;
+      letter-spacing: -0.025em;
+      color: #111;
+      text-transform: uppercase;
+    }
+
+    .brand-name-ar {
+      font-family: 'Cairo', sans-serif;
+      font-size: 54px;
+      font-weight: 700;
+      color: #3C3C3C;
+      line-height: 1.2;
+      margin-bottom: 30px;
+      direction: rtl;
+    }
+
+    .red-rule {
+      width: 68px;
+      height: 4px;
+      background: #C82020;
+      margin-bottom: 26px;
+      transform-origin: left center;
+    }
+
+    .subtitle {
+      font-family: 'Barlow', sans-serif;
+      font-size: 25px;
+      font-weight: 300;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #7A7672;
+      margin-bottom: 44px;
+    }
+
+    /* Outfit breakdown cards */
+    .outfit-row {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 36px;
+    }
+
+    .outfit-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .outfit-frame {
+      width: 168px;
+      height: 198px;
+      background: #ECEAE6;
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .outfit-frame img.product {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 10px;
+    }
+
+    /* Mini logo badge on the polo card thumbnail — CSS bg avoids duplicate img node */
+    .polo-thumb-logo {
+      position: absolute;
+      top: 22px;
+      left: 18px;
+      width: 32px;
+      height: 32px;
+      background: url('assets/logo.jpg') center/contain no-repeat;
+      mix-blend-mode: multiply;
+    }
+
+    .outfit-label {
+      font-family: 'Barlow', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: #8A8785;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .tagline {
+      font-family: 'Barlow', sans-serif;
+      font-size: 20px;
+      font-weight: 300;
+      color: #9A9895;
+      font-style: italic;
+    }
+
+    /* ══════════════════════════════════════
+       SCENE 2  (brand close)
+    ══════════════════════════════════════ */
+    #scene2 {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Inner wrapper — GSAP targets this for crossfade / exit, never the clip itself */
+    #s2-inner {
+      position: absolute;
+      inset: 0;
+      background: #F4F2EF;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0; /* starts invisible; GSAP fades in */
+    }
+
+    .s2-bg-hatch {
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 30px,
+        rgba(200, 30, 30, 0.04) 30px,
+        rgba(200, 30, 30, 0.04) 32px
+      );
+      pointer-events: none;
+    }
+
+    .s2-ghost-word {
+      position: absolute;
+      bottom: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 310px;
+      font-weight: 900;
+      color: rgba(200, 30, 30, 0.04);
+      white-space: nowrap;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .s2-corner-tl {
+      position: absolute;
+      top: 0; left: 0;
+      width: 200px; height: 5px;
+      background: #C82020;
+      transform-origin: left center;
+    }
+    .s2-corner-br {
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 200px; height: 5px;
+      background: #C82020;
+      transform-origin: right center;
+    }
+
+    .s2-logo {
+      width: 270px;
+      height: auto;
+      margin-bottom: 34px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .s2-rule {
+      width: 150px;
+      height: 3px;
+      background: #C82020;
+      margin-bottom: 22px;
+      position: relative;
+      z-index: 1;
+      transform-origin: center center;
+    }
+
+    .s2-tagline {
+      font-family: 'Barlow', sans-serif;
+      font-size: 26px;
+      font-weight: 300;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #7A7672;
+      position: relative;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <div data-composition-id="root" data-start="0" data-width="1920" data-height="1080">
+
+    <!-- Persistent background (no timing, always visible) -->
+    <div class="bg-hatch" data-layout-ignore></div>
+    <div class="bg-bar-top" id="bg-bar-top" data-layout-ignore></div>
+    <div class="bg-bar-left" data-layout-ignore></div>
+
+    <!-- ═══════════════ SCENE 1 ═══════════════ -->
+    <div id="scene1" class="clip" data-start="0" data-duration="8.5" data-track-index="1">
+
+      <!-- Man photo zone with outfit compositing -->
+      <div class="man-zone" id="man-zone">
+        <img class="man-photo" id="man-photo" src="assets/man.jpg" crossorigin="anonymous">
+        <!-- Polo shirt: white bg disappears via multiply, collar/structure shows -->
+        <img class="polo-overlay" id="polo-overlay" src="assets/polo.jpg" crossorigin="anonymous">
+        <!-- Ronda badge on left chest — red shows on white shirt via multiply -->
+        <img class="logo-chest" id="logo-chest" src="assets/logo.jpg" crossorigin="anonymous">
+        <div class="man-edge-fade" data-layout-ignore></div>
+      </div>
+
+      <!-- Vertical accent rule -->
+      <div class="vert-rule" id="vert-rule"></div>
+
+      <!-- Content zone -->
+      <div class="content-zone">
+        <div class="ghost-r" id="ghost-r" data-layout-ignore>R</div>
+
+        <img class="ronda-logo-img" id="logo-right" src="assets/logo.jpg" crossorigin="anonymous">
+        <div class="eyebrow" id="eyebrow">Official Uniform</div>
+        <div class="brand-name-en" id="brand-en">RONDA</div>
+        <div class="brand-name-ar" id="brand-ar">رونـدا</div>
+        <div class="red-rule" id="red-rule"></div>
+        <div class="subtitle" id="subtitle">Logistics and Trading</div>
+
+        <div class="outfit-row" id="outfit-row">
+          <div class="outfit-card">
+            <div class="outfit-frame">
+              <img class="product" src="assets/polo.jpg" crossorigin="anonymous">
+              <div class="polo-thumb-logo"></div>
+            </div>
+            <span class="outfit-label">Polo Shirt</span>
+          </div>
+          <div class="outfit-card">
+            <div class="outfit-frame">
+              <img class="product" src="assets/pants.jpg" crossorigin="anonymous">
+            </div>
+            <span class="outfit-label">Trousers</span>
+          </div>
+        </div>
+
+        <div class="tagline" id="tagline">Where Excellence Meets Professionalism</div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ SCENE 2  (brand outro) ═══════════════ -->
+    <div id="scene2" class="clip" data-start="7.5" data-duration="4.5" data-track-index="2">
+      <!-- s2-inner: GSAP targets this wrapper for crossfade and exit, never the clip div -->
+      <div id="s2-inner">
+        <div class="s2-bg-hatch" data-layout-ignore></div>
+        <div class="s2-ghost-word" data-layout-ignore>RONDA</div>
+        <div class="s2-corner-tl" id="s2-corner-tl"></div>
+        <div class="s2-corner-br" id="s2-corner-br"></div>
+        <img class="s2-logo" id="s2-logo" src="assets/logo.jpg" crossorigin="anonymous">
+        <div class="s2-rule" id="s2-rule"></div>
+        <div class="s2-tagline" id="s2-tagline">Logistics and Trading</div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // ═══════ SCENE 1  (0 → 8.5s) ═══════
+
+      // Accent bar extends across top
+      tl.fromTo("#bg-bar-top",
+        { scaleX: 0, transformOrigin: "left center" },
+        { scaleX: 1, duration: 0.7, ease: "expo.out" },
+        0.1
+      );
+
+      // Ghost R: enters and slowly drifts left throughout scene
+      tl.fromTo("#ghost-r",
+        { opacity: 0, x: 60 },
+        { opacity: 1, x: -30, duration: 8.0, ease: "power1.out" },
+        0.2
+      );
+
+      // Man zone slides in from left
+      tl.fromTo("#man-zone",
+        { x: -90, opacity: 0 },
+        { x: 0, opacity: 1, duration: 1.0, ease: "expo.out" },
+        0.2
+      );
+
+      // Ken Burns on man photo — parent handles position, child handles scale
+      tl.fromTo("#man-photo",
+        { scale: 1.0 },
+        { scale: 1.06, duration: 8.0, ease: "none" },
+        0.2
+      );
+
+      // Polo overlay fades in: multiply blend makes white bg transparent
+      tl.fromTo("#polo-overlay",
+        { opacity: 0 },
+        { opacity: 0.50, duration: 0.85, ease: "power2.out" },
+        1.0
+      );
+
+      // Logo badge pops onto chest with elastic bounce
+      tl.fromTo("#logo-chest",
+        { scale: 0, opacity: 0, transformOrigin: "center center" },
+        { scale: 1, opacity: 1, duration: 0.65, ease: "back.out(2.2)" },
+        1.5
+      );
+
+      // Vertical rule draws down
+      tl.fromTo("#vert-rule",
+        { scaleY: 0, transformOrigin: "top center" },
+        { scaleY: 1, duration: 0.9, ease: "expo.out" },
+        0.55
+      );
+
+      // Ronda logo slides in from right
+      tl.fromTo("#logo-right",
+        { x: 35, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+        0.75
+      );
+
+      // Eyebrow label rises
+      tl.fromTo("#eyebrow",
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.48, ease: "power2.out" },
+        1.0
+      );
+
+      // Brand name EN: slams in from left
+      tl.fromTo("#brand-en",
+        { x: -44, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.72, ease: "expo.out" },
+        1.18
+      );
+
+      // Brand name AR: same direction, shorter lag
+      tl.fromTo("#brand-ar",
+        { x: -28, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.55, ease: "power3.out" },
+        1.38
+      );
+
+      // Red rule expands
+      tl.fromTo("#red-rule",
+        { scaleX: 0, transformOrigin: "left center" },
+        { scaleX: 1, duration: 0.5, ease: "expo.out" },
+        1.62
+      );
+
+      // Subtitle floats up
+      tl.fromTo("#subtitle",
+        { y: 18, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
+        1.78
+      );
+
+      // Outfit cards reveal as group
+      tl.fromTo("#outfit-row",
+        { y: 32, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
+        2.10
+      );
+
+      // Tagline soft fade in
+      tl.fromTo("#tagline",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.55, ease: "sine.out" },
+        2.60
+      );
+
+      // ═══════ SCENE 2 CROSSFADE & CONTENT (7.5 → 12s) ═══════
+
+      // Crossfade: s2-inner (content wrapper) fades in — clip #scene2 is never touched
+      tl.fromTo("#s2-inner",
+        { opacity: 0 },
+        { opacity: 1, duration: 1.0, ease: "power1.inOut" },
+        7.5
+      );
+
+      // Corner accent bars extend
+      tl.fromTo("#s2-corner-tl",
+        { scaleX: 0, transformOrigin: "left center" },
+        { scaleX: 1, duration: 0.65, ease: "expo.out" },
+        7.75
+      );
+      tl.fromTo("#s2-corner-br",
+        { scaleX: 0, transformOrigin: "right center" },
+        { scaleX: 1, duration: 0.65, ease: "expo.out" },
+        7.95
+      );
+
+      // Logo scales in with slight bounce
+      tl.fromTo("#s2-logo",
+        { scale: 0.6, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.85, ease: "back.out(1.5)" },
+        7.95
+      );
+
+      // Rule expands from center
+      tl.fromTo("#s2-rule",
+        { scaleX: 0, transformOrigin: "center center" },
+        { scaleX: 1, duration: 0.5, ease: "expo.out" },
+        8.65
+      );
+
+      // Tagline rises
+      tl.fromTo("#s2-tagline",
+        { y: 22, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
+        8.90
+      );
+
+      // Final fade out — targets the content wrapper, not the clip element.
+      tl.to("#s2-inner", { opacity: 0, duration: 0.55, ease: "power1.in" }, 11.45);
+      tl.set("#s2-inner", { opacity: 0, visibility: "hidden" }, 12.0);
+
+      window.__timelines["root"] = tl;
+    </script>
+
+  </div>
+</body>
+</html>
