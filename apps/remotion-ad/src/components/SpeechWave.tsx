@@ -1,11 +1,16 @@
 import React from "react";
-import { useCurrentFrame, interpolate, useVideoConfig } from "remotion";
+import { useCurrentFrame, interpolate } from "remotion";
 
 export const SpeechWave: React.FC<{ isActive: boolean }> = ({ isActive }) => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
 
   const bars = [3, 6, 9, 7, 5, 8, 4, 6, 9, 5, 7, 3, 8, 6, 4];
+
+  // Fade in/out using Remotion interpolation (no CSS transitions)
+  const containerOpacity = interpolate(frame % 6, [0, 3, 5], [0.85, 1, 0.85], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
 
   return (
     <div
@@ -15,8 +20,7 @@ export const SpeechWave: React.FC<{ isActive: boolean }> = ({ isActive }) => {
         justifyContent: "center",
         gap: 3,
         height: 40,
-        opacity: isActive ? 1 : 0,
-        transition: "opacity 0.3s",
+        opacity: isActive ? containerOpacity : 0,
       }}
     >
       {bars.map((baseH, i) => {
@@ -36,7 +40,6 @@ export const SpeechWave: React.FC<{ isActive: boolean }> = ({ isActive }) => {
               height: waveHeight,
               borderRadius: 2,
               background: "linear-gradient(to top, #ff6b35, #fff)",
-              transition: "height 0.05s",
             }}
           />
         );

@@ -1,5 +1,6 @@
-import { useCurrentFrame, interpolate, spring, useVideoConfig } from "remotion";
 import React from "react";
+import { useCurrentFrame, interpolate, spring, useVideoConfig, Easing } from "remotion";
+import { fontFamily } from "../fonts";
 
 interface SubtitleProps {
   text: string;
@@ -17,31 +18,36 @@ export const Subtitle: React.FC<SubtitleProps> = ({
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const isActive = frame >= startFrame && frame <= endFrame;
+  const isVisible = frame >= startFrame && frame <= endFrame;
+  if (!isVisible) return null;
+
+  const localFrame = frame - startFrame;
+  const totalFrames = endFrame - startFrame;
 
   const opacity = interpolate(
-    frame,
-    [startFrame, startFrame + 8, endFrame - 8, endFrame],
+    localFrame,
+    [0, 8, totalFrames - 8, totalFrames],
     [0, 1, 1, 0],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+    {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+      easing: Easing.bezier(0.16, 1, 0.3, 1),
+    }
   );
 
-  const slideY = interpolate(
-    frame,
-    [startFrame, startFrame + 12],
-    [20, 0],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-  );
+  const slideY = interpolate(localFrame, [0, 12], [24, 0], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+    easing: Easing.bezier(0.16, 1, 0.3, 1),
+  });
 
   const scale = spring({
-    frame: frame - startFrame,
+    frame: localFrame,
     fps,
     config: { damping: 15, stiffness: 200, mass: 0.8 },
     from: 0.9,
     to: 1,
   });
-
-  if (!isActive && frame > endFrame) return null;
 
   return (
     <div
@@ -50,7 +56,7 @@ export const Subtitle: React.FC<SubtitleProps> = ({
         transform: `translateY(${slideY}px) scale(${scale})`,
         textAlign: "center",
         direction: "rtl",
-        fontFamily: "'Cairo', 'Noto Kufi Arabic', 'Arial', sans-serif",
+        fontFamily,
         fontSize: highlight ? 52 : 44,
         fontWeight: highlight ? 900 : 700,
         color: "#ffffff",
@@ -58,10 +64,9 @@ export const Subtitle: React.FC<SubtitleProps> = ({
         lineHeight: 1.4,
         padding: "12px 24px",
         background: highlight
-          ? "linear-gradient(135deg, rgba(200,0,0,0.85), rgba(120,0,0,0.85))"
-          : "rgba(0,0,0,0.6)",
+          ? "linear-gradient(135deg, rgba(200,0,0,0.88), rgba(120,0,0,0.88))"
+          : "rgba(0,0,0,0.62)",
         borderRadius: 16,
-        backdropFilter: "blur(4px)",
         border: highlight ? "2px solid rgba(255,100,100,0.5)" : "none",
         maxWidth: "90%",
       }}
