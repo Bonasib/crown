@@ -64,15 +64,17 @@ export const authRouter = router({
 
       if (input.organizationSlug) {
         const membership = user.memberships.find(
-          (m) => m.organization.slug === input.organizationSlug,
+          (m: { organization: { slug: string }; organizationId: string; roles: unknown[] }) =>
+            m.organization.slug === input.organizationSlug,
         );
         if (membership) {
           orgId = membership.organizationId;
           roles = membership.roles as UserRole[];
         }
       } else if (user.memberships.length === 1 && user.memberships[0]) {
-        orgId = user.memberships[0].organizationId;
-        roles = user.memberships[0].roles as UserRole[];
+        const mem = user.memberships[0];
+        orgId = mem.organizationId;
+        roles = mem.roles as UserRole[];
       }
 
       // Check for SUPER_ADMIN (no org membership needed)

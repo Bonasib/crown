@@ -40,10 +40,12 @@ async function bootstrap() {
     prefix: '/trpc',
     trpcOptions: {
       router: appRouter,
-      createContext: async ({ req }) => {
-        const token = extractTokenFromHeader(req.headers.authorization);
+      createContext: async ({ req }: { req: { headers: Record<string, string | string[] | undefined> } }) => {
+        const authHeader = Array.isArray(req.headers.authorization) ? req.headers.authorization[0] : req.headers.authorization;
+        const token = extractTokenFromHeader(authHeader);
         const user = token ? verifyToken(token) : null;
-        const orgId = req.headers['x-org-id'] as string | undefined;
+        const rawOrgId = req.headers['x-org-id'];
+        const orgId = Array.isArray(rawOrgId) ? rawOrgId[0] : rawOrgId;
 
         return {
           user,

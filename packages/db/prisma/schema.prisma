@@ -86,6 +86,36 @@ enum UserRole {
   BOOKER
   VIEWER
   ACCOUNTANT
+  IMPORTER
+  WAREHOUSE_OPERATOR
+}
+
+enum AccountType {
+  IMPORTER
+  WAREHOUSE_OPERATOR
+}
+
+enum OtpChannel {
+  WHATSAPP
+  SMS
+}
+
+enum BarcodeType {
+  PRODUCT
+  CARTON
+}
+
+enum OutboxStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+enum InvoiceAction {
+  APPROVED
+  DECLINED
+  REVISION_REQUESTED
 }
 
 enum DealStage {
@@ -188,45 +218,53 @@ model Organization {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  members       Membership[]
-  quotes        Quote[]
-  shipments     Shipment[]
-  invoices      Invoice[]
-  suppliers     Supplier[]
-  contacts      Contact[]
-  leads         Lead[]
-  deals         Deal[]
-  documents     Document[]
-  notifications Notification[]
-  apiKeys       ApiKey[]
-  settings      Setting[]
+  members             Membership[]
+  quotes              Quote[]
+  shipments           Shipment[]
+  invoices            Invoice[]
+  suppliers           Supplier[]
+  contacts            Contact[]
+  leads               Lead[]
+  deals               Deal[]
+  documents           Document[]
+  notifications       Notification[]
+  apiKeys             ApiKey[]
+  settings            Setting[]
+  products            Product[]
+  warehouseReceivings WarehouseReceiving[]
 
   @@map("organizations")
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified Boolean   @default(false)
-  passwordHash  String
-  firstName     String
-  lastName      String
-  avatarUrl     String?
-  phone         String?
-  preferredLang String    @default("en")
-  isActive      Boolean   @default(true)
-  lastLoginAt   DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String      @id @default(cuid())
+  email          String      @unique
+  emailVerified  Boolean     @default(false)
+  passwordHash   String
+  firstName      String
+  lastName       String
+  avatarUrl      String?
+  phone          String?
+  phoneVerified  Boolean     @default(false)
+  accountType    AccountType?
+  businessName   String?
+  businessAddress String?
+  preferredLang  String      @default("en")
+  isActive       Boolean     @default(true)
+  lastLoginAt    DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
-  memberships      Membership[]
-  refreshTokens    RefreshToken[]
-  auditLogs        AuditLog[]
-  inspectionPhotos InspectionPhoto[]
-  trackingEvents   TrackingEvent[]
-  activities       Activity[]
-  assignedLeads    Lead[]            @relation("AssignedLeads")
-  assignedDeals    Deal[]            @relation("AssignedDeals")
+  memberships        Membership[]
+  refreshTokens      RefreshToken[]
+  auditLogs          AuditLog[]
+  inspectionPhotos   InspectionPhoto[]
+  trackingEvents     TrackingEvent[]
+  activities         Activity[]
+  assignedLeads      Lead[]              @relation("AssignedLeads")
+  assignedDeals      Deal[]              @relation("AssignedDeals")
+  otpVerifications   OtpVerification[]
+  warehouseReceivings WarehouseReceiving[]
 
   @@map("users")
 }
@@ -771,27 +809,30 @@ model Account {
 }
 
 model Invoice {
-  id             String        @id @default(cuid())
-  organizationId String
-  shipmentId     String?
-  number         String        @unique
-  status         InvoiceStatus @default(DRAFT)
-  currency       String        @default("USD")
-  subtotalMinor  Int
-  taxMinor       Int           @default(0)
-  totalMinor     Int
-  dueDate        DateTime?
-  issuedAt       DateTime?
-  paidAt         DateTime?
-  notes          String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id                 String        @id @default(cuid())
+  organizationId     String
+  shipmentId         String?
+  number             String        @unique
+  status             InvoiceStatus @default(DRAFT)
+  currency           String        @default("USD")
+  subtotalMinor      Int
+  taxMinor           Int           @default(0)
+  totalMinor         Int
+  dueDate            DateTime?
+  issuedAt           DateTime?
+  paidAt             DateTime?
+  stripePaymentLink  String?
+  stripeSessionId    String?
+  notes              String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   organization  Organization      @relation(fields: [organizationId], references: [id])
   shipment      Shipment?         @relation(fields: [shipmentId], references: [id])
   lineItems     InvoiceLineItem[]
   payments      Payment[]
   ledgerEntries LedgerEntry[]
+  revisions     InvoiceRevision[]
 
   @@index([organizationId])
   @@map("invoices")
@@ -1042,4 +1083,164 @@ model WebhookSubscription {
   createdAt      DateTime @default(now())
 
   @@map("webhook_subscriptions")
+}
+
+// ─── Smart Import Platform ─────────────────────────────────────────────────────
+
+model OtpVerification {
+  id          String     @id @default(cuid())
+  userId      String
+  code        String
+  channel     OtpChannel
+  destination String
+  expiresAt   DateTime
+  verifiedAt  DateTime?
+  attempts    Int        @default(0)
+  createdAt   DateTime   @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("otp_verifications")
+}
+
+model Product {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  aiDescription  String?
+  hsCode         String?
+  aiHsCode       String?
+  weightKg       Decimal? @db.Decimal(10, 3)
+  lengthCm       Decimal? @db.Decimal(10, 2)
+  widthCm        Decimal? @db.Decimal(10, 2)
+  heightCm       Decimal? @db.Decimal(10, 2)
+  imageKey       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization        @relation(fields: [organizationId], references: [id])
+  barcodes     Barcode[]
+  receivings   WarehouseReceiving[]
+
+  @@index([organizationId])
+  @@map("products")
+}
+
+model Barcode {
+  id            String      @id @default(cuid())
+  productId     String
+  type          BarcodeType
+  code          String      @unique
+  qrDeepLink    String
+  pdfKey        String?
+  whatsappSentAt DateTime?
+  createdAt     DateTime    @default(now())
+
+  product    Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  scanEvents BarcodeScan[]
+  receivings WarehouseReceiving[]
+
+  @@index([productId])
+  @@map("barcodes")
+}
+
+model BarcodeScan {
+  id          String   @id @default(cuid())
+  barcodeId   String
+  scannedById String?
+  ipAddress   String?
+  userAgent   String?
+  location    String?
+  createdAt   DateTime @default(now())
+
+  barcode Barcode @relation(fields: [barcodeId], references: [id], onDelete: Cascade)
+
+  @@index([barcodeId])
+  @@map("barcode_scans")
+}
+
+model WarehouseReceiving {
+  id              String   @id @default(cuid())
+  organizationId  String
+  barcodeId       String
+  productId       String
+  receivedById    String
+  actualWeightKg  Decimal? @db.Decimal(10, 3)
+  actualLengthCm  Decimal? @db.Decimal(10, 2)
+  actualWidthCm   Decimal? @db.Decimal(10, 2)
+  actualHeightCm  Decimal? @db.Decimal(10, 2)
+  condition       String?
+  photoKeys       String[]
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization Organization       @relation(fields: [organizationId], references: [id])
+  barcode      Barcode            @relation(fields: [barcodeId], references: [id])
+  product      Product            @relation(fields: [productId], references: [id])
+  receivedBy   User               @relation(fields: [receivedById], references: [id])
+  magicLink    SupplierMagicLink?
+
+  @@index([organizationId])
+  @@index([barcodeId])
+  @@map("warehouse_receivings")
+}
+
+model SupplierMagicLink {
+  id             String    @id @default(cuid())
+  receivingId    String    @unique
+  token          String    @unique
+  expiresAt      DateTime
+  usedAt         DateTime?
+  supplierName   String?
+  dispatchDate   DateTime?
+  trackingNumber String?
+  notes          String?
+  createdAt      DateTime  @default(now())
+
+  receiving WarehouseReceiving @relation(fields: [receivingId], references: [id], onDelete: Cascade)
+
+  @@map("supplier_magic_links")
+}
+
+model OutboxEvent {
+  id          String       @id @default(cuid())
+  topic       String
+  payload     Json
+  status      OutboxStatus @default(PENDING)
+  attempts    Int          @default(0)
+  lastError   String?
+  processedAt DateTime?
+  createdAt   DateTime     @default(now())
+
+  @@index([status, createdAt])
+  @@map("outbox_events")
+}
+
+model InvoiceRevision {
+  id         String        @id @default(cuid())
+  invoiceId  String
+  action     InvoiceAction
+  actorId    String?
+  reason     String?
+  createdAt  DateTime      @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("invoice_revisions")
+}
+
+model NotificationTemplate {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  channel   OtpChannel
+  body      String
+  variables String[]
+  isActive  Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+
+  @@map("notification_templates")
 }

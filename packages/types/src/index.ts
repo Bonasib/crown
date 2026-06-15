@@ -16,7 +16,14 @@ export type GoodsType =
 export type UserRole =
   | 'SUPER_ADMIN' | 'OPS_MANAGER' | 'OPS_AGENT' | 'FINANCE' | 'SALES_REP'
   | 'SALES_MANAGER' | 'INSPECTOR' | 'SUPPORT' | 'READ_ONLY_AUDITOR'
-  | 'ORG_OWNER' | 'ORG_ADMIN' | 'BOOKER' | 'VIEWER' | 'ACCOUNTANT';
+  | 'ORG_OWNER' | 'ORG_ADMIN' | 'BOOKER' | 'VIEWER' | 'ACCOUNTANT'
+  | 'IMPORTER' | 'WAREHOUSE_OPERATOR';
+
+export type AccountType = 'IMPORTER' | 'WAREHOUSE_OPERATOR';
+export type OtpChannel = 'WHATSAPP' | 'SMS';
+export type BarcodeType = 'PRODUCT' | 'CARTON';
+export type OutboxStatus = 'PENDING' | 'PROCESSING' | 'PROCESSED' | 'FAILED';
+export type InvoiceAction = 'APPROVED' | 'DECLINED' | 'REVISION_REQUESTED';
 export type InspectionStage = 'FACTORY' | 'PRODUCTION' | 'QC' | 'PACKAGING' | 'LOADING' | 'SEAL';
 export type DealStage = 'NEW' | 'QUALIFIED' | 'QUOTED' | 'NEGOTIATION' | 'WON' | 'LOST';
 export type Market = 'FBA_US' | 'FBA_EU' | 'FBA_UK' | 'FBA_SA' | 'NOON_SA' | 'NOON_UAE' | 'NOON_EG';

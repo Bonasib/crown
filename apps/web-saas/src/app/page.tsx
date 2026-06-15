@@ -1,203 +1,181 @@
 import Link from 'next/link';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, StatCard, Badge } from '@ronda/ui';
-import {
-  Package,
-  Ship,
-  FileText,
-  TrendingUp,
-  MapPin,
-  CheckCircle,
-  Clock,
-  AlertTriangle,
-} from 'lucide-react';
+import { Button, Card, CardContent, CardHeader, CardTitle, Badge } from '@ronda/ui';
+import { Package, FileText, TrendingUp, CheckCircle, Scan, Warehouse, Bell, ShieldCheck, ArrowRight, Zap } from 'lucide-react';
 
-export default function CustomerPortalHome() {
+export default function LandingPage() {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-background">
       {/* Navigation */}
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <Ship className="h-6 w-6 text-primary" />
-            <span className="text-lg font-bold text-primary">Ronda Ship</span>
-            <Badge variant="secondary" className="ml-2 text-xs">Customer Portal</Badge>
+            <Package className="h-6 w-6 text-primary" />
+            <span className="text-lg font-bold">Smart Import</span>
           </div>
-          <nav className="flex items-center gap-6 text-sm">
-            <Link href="/dashboard" className="font-medium hover:text-primary">Dashboard</Link>
-            <Link href="/shipments" className="text-muted-foreground hover:text-primary">Shipments</Link>
-            <Link href="/quotes" className="text-muted-foreground hover:text-primary">Quotes</Link>
-            <Link href="/documents" className="text-muted-foreground hover:text-primary">Documents</Link>
+          <nav className="hidden items-center gap-6 text-sm md:flex">
+            <Link href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
+            <Link href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">How it works</Link>
           </nav>
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="ghost" asChild>
               <Link href="/login">Sign in</Link>
             </Button>
-            <Button size="sm" asChild>
-              <Link href="/quotes/new">Get Quote</Link>
+            <Button asChild>
+              <Link href="/register">Get started</Link>
             </Button>
           </div>
         </div>
       </header>
 
       {/* Hero */}
-      <section className="bg-gradient-to-b from-primary/10 to-background py-20">
-        <div className="container mx-auto px-4 text-center">
-          <Badge className="mb-4">China → Saudi Arabia · UAE · USA</Badge>
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-            Freight Forwarding,{' '}
-            <span className="text-primary">Simplified</span>
-          </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            Book, track, and manage your LCL and FCL shipments from China to the Middle East and beyond.
-            Real-time tracking, automated documents, and full customs support.
-          </p>
-          <div className="mt-8 flex justify-center gap-4">
-            <Button size="lg" asChild>
-              <Link href="/quotes/new">
-                <Package className="mr-2 h-4 w-4" />
-                Get Instant Quote
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/track">Track Shipment</Link>
-            </Button>
-          </div>
+      <section className="flex flex-col items-center gap-6 px-4 py-24 text-center">
+        <Badge variant="secondary" className="text-sm">Now in early access</Badge>
+        <h1 className="max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+          Import smarter.<br className="hidden sm:block" /> Ship with confidence.
+        </h1>
+        <p className="max-w-2xl text-lg text-muted-foreground">
+          Smart Import connects importers, warehouse operators, and administrators through one
+          unified platform — from product setup to Stripe-powered payment.
+        </p>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button size="lg" asChild>
+            <Link href="/register">
+              Start for free <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+          <Button size="lg" variant="outline" asChild>
+            <Link href="/login">Sign in to your account</Link>
+          </Button>
         </div>
-      </section>
 
-      {/* Stats */}
-      <section className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <StatCard
-            title="Active Shipments"
-            value="12"
-            description="3 arriving this week"
-            icon={<Ship className="h-4 w-4" />}
-            trend={{ value: 8, label: 'vs last month', positive: true }}
-          />
-          <StatCard
-            title="Pending Quotes"
-            value="3"
-            description="2 expiring soon"
-            icon={<FileText className="h-4 w-4" />}
-          />
-          <StatCard
-            title="Delivered (YTD)"
-            value="47"
-            description="On-time rate: 94%"
-            icon={<CheckCircle className="h-4 w-4" />}
-            trend={{ value: 12, label: 'vs last year', positive: true }}
-          />
-          <StatCard
-            title="Avg Transit"
-            value="22 days"
-            description="China → Jeddah"
-            icon={<Clock className="h-4 w-4" />}
-          />
-        </div>
-      </section>
-
-      {/* Recent Shipments */}
-      <section className="container mx-auto px-4 py-4">
-        <h2 className="mb-4 text-xl font-semibold">Recent Shipments</h2>
-        <div className="space-y-3">
+        {/* Stats */}
+        <div className="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-4">
           {[
-            {
-              id: 'SHP-2025-001',
-              origin: 'Shanghai',
-              dest: 'Jeddah',
-              status: 'IN_TRANSIT',
-              eta: 'Mar 9, 2025',
-              mode: 'FCL 40FT',
-            },
-            {
-              id: 'SHP-2025-002',
-              origin: 'Ningbo',
-              dest: 'Dubai',
-              status: 'CUSTOMS_IMPORT',
-              eta: 'Mar 2, 2025',
-              mode: 'LCL',
-            },
-            {
-              id: 'SHP-2025-003',
-              origin: 'Shenzhen',
-              dest: 'Los Angeles',
-              status: 'BOOKED',
-              eta: 'Apr 15, 2025',
-              mode: 'FCL 20FT',
-            },
-          ].map((shipment) => (
-            <Card key={shipment.id} className="hover:border-primary/50 transition-colors cursor-pointer">
-              <CardContent className="flex items-center justify-between py-4">
-                <div className="flex items-center gap-4">
-                  <Ship className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="font-medium">{shipment.id}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {shipment.origin} → {shipment.dest} · {shipment.mode}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">ETA</p>
-                    <p className="text-sm font-medium">{shipment.eta}</p>
-                  </div>
-                  <Badge
-                    variant={
-                      shipment.status === 'IN_TRANSIT' ? 'default' :
-                      shipment.status === 'CUSTOMS_IMPORT' ? 'warning' :
-                      'info'
-                    }
-                  >
-                    {shipment.status.replace('_', ' ')}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
+            { label: 'Delivery phases', value: '3' },
+            { label: 'User journeys', value: '5' },
+            { label: 'Connected services', value: '4' },
+            { label: 'AI integrations', value: '3' },
+          ].map((s) => (
+            <div key={s.label} className="flex flex-col items-center gap-1">
+              <span className="text-3xl font-bold text-primary">{s.value}</span>
+              <span className="text-xs text-muted-foreground">{s.label}</span>
+            </div>
           ))}
         </div>
       </section>
 
       {/* Features */}
-      <section className="container mx-auto px-4 py-12">
-        <h2 className="mb-8 text-center text-2xl font-bold">Everything you need</h2>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <MapPin className="h-8 w-8 text-primary" />
-              <CardTitle className="mt-2">Real-time Tracking</CardTitle>
-              <CardDescription>
-                Track your cargo from factory floor to warehouse door with live vessel tracking.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader>
-              <FileText className="h-8 w-8 text-primary" />
-              <CardTitle className="mt-2">Document Management</CardTitle>
-              <CardDescription>
-                All your shipping documents in one place. Auto-generate packing lists and commercial invoices.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader>
-              <TrendingUp className="h-8 w-8 text-primary" />
-              <CardTitle className="mt-2">Instant Quotes</CardTitle>
-              <CardDescription>
-                Get transparent pricing breakdowns for LCL and FCL shipments across all major trade lanes.
-              </CardDescription>
-            </CardHeader>
-          </Card>
+      <section id="features" className="border-t bg-muted/30 px-4 py-20">
+        <div className="container mx-auto">
+          <div className="mb-12 text-center">
+            <h2 className="text-3xl font-bold">Everything you need to import at scale</h2>
+            <p className="mt-3 text-muted-foreground">Built for importers, warehouse teams, and administrators.</p>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              {
+                icon: Package,
+                title: 'Product & barcode management',
+                description: 'Add products with AI-assisted descriptions and HS Code suggestions. Auto-generate QR barcodes your supplier can scan at dispatch.',
+              },
+              {
+                icon: Scan,
+                title: 'Warehouse receiving',
+                description: 'Scan a barcode to instantly identify incoming goods. Record actual weight, dimensions, and photos — all linked to the shipment.',
+              },
+              {
+                icon: FileText,
+                title: 'Document engine with OCR',
+                description: 'Upload any commercial invoice or packing list. AI extracts quantities, values, and HS Codes for one-click admin verification.',
+              },
+              {
+                icon: TrendingUp,
+                title: 'Stripe-powered invoicing',
+                description: 'Receive, approve, decline, or request revision on invoices. Pay securely via card or bank transfer — confirmed automatically by webhook.',
+              },
+              {
+                icon: Bell,
+                title: 'WhatsApp + SMS notifications',
+                description: 'Every status change triggers an automatic notification to the right party. No chasing for updates.',
+              },
+              {
+                icon: ShieldCheck,
+                title: 'Audit trail & compliance',
+                description: 'Every action is logged with timestamp, actor, and before/after state. Full document version history with integrity verification.',
+              },
+            ].map((feature) => (
+              <Card key={feature.title} className="border-border/50">
+                <CardHeader>
+                  <feature.icon className="mb-2 h-8 w-8 text-primary" />
+                  <CardTitle className="text-base">{feature.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{feature.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section id="how-it-works" className="px-4 py-20">
+        <div className="container mx-auto">
+          <div className="mb-12 text-center">
+            <h2 className="text-3xl font-bold">How it works</h2>
+            <p className="mt-3 text-muted-foreground">Three actors, one platform, end-to-end.</p>
+          </div>
+          <div className="grid gap-8 md:grid-cols-3">
+            {[
+              {
+                role: 'Importer',
+                color: 'text-primary',
+                steps: ['Register & verify via WhatsApp OTP', 'Add products, get AI description & HS Code', 'Share barcode with supplier via WhatsApp', 'Track shipment, approve invoice, pay via Stripe'],
+              },
+              {
+                role: 'Warehouse',
+                color: 'text-amber-600',
+                steps: ['Scan barcode when goods arrive', 'Record weight, dimensions, photos', 'Send supplier magic link for dispatch details', 'Monitor receiving dashboard'],
+              },
+              {
+                role: 'Admin',
+                color: 'text-violet-600',
+                steps: ['Review AI-extracted document data', 'Manage HS Code suggestions queue', 'Issue & revise invoices', 'Update shipment status — notifications fire automatically'],
+              },
+            ].map((actor) => (
+              <div key={actor.role} className="flex flex-col gap-4">
+                <h3 className={`text-lg font-semibold ${actor.color}`}>{actor.role}</h3>
+                <ol className="flex flex-col gap-3">
+                  {actor.steps.map((step, i) => (
+                    <li key={step} className="flex items-start gap-3">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold">
+                        {i + 1}
+                      </span>
+                      <span className="text-sm text-muted-foreground">{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="border-t bg-primary px-4 py-20 text-center text-primary-foreground">
+        <div className="container mx-auto">
+          <Zap className="mx-auto mb-4 h-10 w-10 opacity-80" />
+          <h2 className="mb-4 text-3xl font-bold">Ready to import smarter?</h2>
+          <p className="mb-8 text-primary-foreground/80">Join importers and warehouse teams already on the platform.</p>
+          <Button size="lg" variant="secondary" asChild>
+            <Link href="/register">Create your free account</Link>
+          </Button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="mt-auto border-t bg-muted/30 py-8">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>© 2025 Ronda Ship. All rights reserved.</p>
-        </div>
+      <footer className="border-t px-4 py-8 text-center text-sm text-muted-foreground">
+        <p>© 2026 Smart Import Platform. All rights reserved.</p>
       </footer>
     </div>
   );

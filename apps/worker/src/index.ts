@@ -2,9 +2,10 @@ import { queues } from './queues';
 import { createEmailWorker } from './workers/email-notifications';
 import { createVesselTrackerWorker } from './workers/vessel-tracker';
 import { createFxRateSyncWorker } from './workers/fx-rate-sync';
+import { startOutboxProcessor } from './workers/outbox-processor';
 
 async function main() {
-  console.log('\n⚙️  Ronda Ship Worker starting...\n');
+  console.log('\n⚙️  Smart Import Worker starting...\n');
 
   // Start workers
   const workers = [
@@ -13,7 +14,10 @@ async function main() {
     createFxRateSyncWorker(),
   ];
 
-  console.log(`✅ Started ${workers.length} workers`);
+  // Start outbox processor (Postgres outbox pattern)
+  await startOutboxProcessor();
+
+  console.log(`✅ Started ${workers.length} workers + outbox processor`);
 
   // Schedule recurring jobs
   await queues.fxRateSync.add(
