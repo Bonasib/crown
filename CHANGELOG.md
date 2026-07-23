@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — Telegram Digital Goods & SMM Shop Bot
+
+- `packages/shop-db`: standalone Prisma schema/datasource for the shop
+  domain (products, product keys, categories, SMM services/providers,
+  coupons incl. affiliate, orders, admin users, settings).
+- `packages/shop-core`: Arabic(default)/English i18n dictionary, Stars
+  pricing + coupon validation helpers, a generic "JAP-standard" SMM
+  provider client, and a best-effort G2A Integration API client.
+- `apps/telegram-bot`: grammY bot — catalog browsing, SMM service ordering,
+  coupon entry, Telegram Stars (XTR) checkout via `sendInvoice` /
+  `pre_checkout_query` / `successful_payment`, chat + file delivery with
+  progress messages, `/myorders`, affiliate referral capture via `/start`
+  payload.
+- `apps/shop-api`: Fastify REST API with JWT admin auth; CRUD for products
+  (capped at 200), categories, SMM services/providers (capped at 200),
+  coupons (regular + affiliate), settings, and read endpoints for orders
+  and affiliate earnings.
+- `apps/shop-admin`: Next.js admin panel (new `shopTheme` gold/black theme
+  in `@ronda/ui`) — dashboard, products, SMM, coupons, orders, settings,
+  with an Arabic/English toggle.
+
 ## [0.1.0] - 2025-05-27
 
 ### Added — Phase 0: Foundations

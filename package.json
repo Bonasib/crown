@@ -10,7 +10,10 @@
     "typecheck": "turbo run typecheck",
     "db:push": "pnpm --filter @ronda/db db:push",
     "db:seed": "pnpm --filter @ronda/db db:seed",
-    "db:migrate": "pnpm --filter @ronda/db db:migrate"
+    "db:migrate": "pnpm --filter @ronda/db db:migrate",
+    "shop:db:push": "pnpm --filter @ronda/shop-db db:push",
+    "shop:db:seed": "pnpm --filter @ronda/shop-db db:seed",
+    "shop:db:migrate": "pnpm --filter @ronda/shop-db db:migrate"
   },
   "devDependencies": {
     "turbo": "^2.3.3",

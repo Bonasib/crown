@@ -3,7 +3,7 @@
  * Each theme is a set of CSS custom property values injected at <html> level.
  */
 
-export type AppTheme = 'saas' | 'erp' | 'crm' | 'admin';
+export type AppTheme = 'saas' | 'erp' | 'crm' | 'admin' | 'shop';
 
 export interface ThemeTokens {
   /** HSL value for --primary (e.g. "175 84% 32%") */
@@ -87,11 +87,29 @@ export const adminTheme: ThemeTokens = {
   sidebarPrimaryForeground: '0 0% 100%',
 };
 
+/**
+ * shop-admin (Telegram Digital Goods Shop) — Gold/Black "Crown" theme
+ * Primary: #B8860B (dark goldenrod), Background: near-black, Accent: gold
+ */
+export const shopTheme: ThemeTokens = {
+  primary: '43 74% 38%',            // #B8860B dark goldenrod
+  primaryForeground: '0 0% 100%',
+  accent: '45 93% 58%',             // gold
+  accentForeground: '26 83% 10%',
+  background: '0 0% 99%',
+  foreground: '20 14% 8%',
+  ring: '43 74% 38%',
+  sidebarBackground: '20 14% 10%',   // near-black
+  sidebarPrimary: '45 93% 58%',
+  sidebarPrimaryForeground: '26 83% 10%',
+};
+
 export const themes: Record<AppTheme, ThemeTokens> = {
   saas: saasTheme,
   erp: erpTheme,
   crm: crmTheme,
   admin: adminTheme,
+  shop: shopTheme,
 };
 
 /**

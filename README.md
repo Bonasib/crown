@@ -129,6 +129,66 @@ pnpm db:seed        # Seed database
 pnpm db:migrate     # Run migrations
 ```
 
+## Telegram Digital Goods & SMM Shop Bot
+
+A separate product living in this monorepo: a Telegram bot that sells digital
+products (gift cards, keys, files) and social-media growth (SMM) services,
+paid for with Telegram Stars (XTR).
+
+| App | Port | Purpose |
+|-----|------|---------|
+| `telegram-bot` | — | The bot itself (grammY, long polling) |
+| `shop-api` | 4100 | Fastify REST API behind the admin panel |
+| `shop-admin` | 3010 | Next.js admin panel (Gold/Black "Crown" theme) |
+
+It has its own database (`packages/shop-db`, `SHOP_DATABASE_URL`), separate
+from the freight platform's `packages/db` — the two domains don't share
+tables.
+
+### Features
+
+- **Catalog**: admin-managed digital products, capped at 200 entries, each
+  editable/deletable. Delivery via a static text message, a hosted file URL,
+  or a pool of one-time keys/codes (claimed atomically per order). `sourceType`
+  can be tagged `G2A`, and `packages/shop-core`'s `lookupG2aProduct()` will
+  opportunistically check G2A's Integration API for price/stock — G2A's API
+  is seller/listing-oriented, not a generic buy-and-resell endpoint, so this
+  is never required for checkout to work.
+- **SMM services**: also capped at 200, each pointing at a generic
+  "JAP-standard" SMM panel provider (`packages/shop-core/smmProvider.ts`) —
+  the de facto API shape most SMM panels expose. Buyers submit a profile/post
+  link and a quantity; the bot places the order with the provider after
+  payment and lets buyers re-check status from `/myorders`.
+- **Payment**: Telegram Stars (currency `XTR`) via `sendInvoice` /
+  `pre_checkout_query` / `successful_payment` — no external payment gateway.
+  Stars have no fixed real-world exchange rate, so pricing is
+  `cost × (1 + profit%) × stars_per_usd`, where both the global profit % and
+  the USD→Stars rate are admin-configurable (Settings page).
+- **Delivery**: after payment, the bot posts the product both as a chat
+  message and as a downloadable file, with progress messages at each step
+  (payment confirmed → preparing → delivered).
+- **Coupons**: percent/fixed discount codes, with a usage limit and
+  expiry. A coupon can also be marked `AFFILIATE` and tied to a Telegram
+  user ID + commission %; when redeemed, the affiliate is credited Stars
+  and notified in their own chat with the bot.
+- **Languages**: Arabic (default) and English, switchable per user from the
+  bot menu; the admin panel has the same toggle.
+
+### Running it locally
+
+```bash
+cp .env.example .env   # fill in TELEGRAM_BOT_TOKEN, ADMIN_JWT_SECRET, SHOP_DATABASE_URL
+pnpm shop:db:push
+pnpm shop:db:seed      # creates default settings + an admin login (see SEED_ADMIN_* in .env)
+pnpm --filter @ronda/telegram-bot dev
+pnpm --filter @ronda/shop-api dev
+pnpm --filter @ronda/shop-admin dev   # http://localhost:3010
+```
+
+G2A and SMM provider credentials are entered through the admin panel
+(Settings / SMM → Providers) rather than env vars, so they can be rotated
+without a redeploy.
+
 ## API
 
 The tRPC API is at `http://localhost:4000/trpc`.

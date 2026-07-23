@@ -51,6 +51,7 @@ export {
   erpTheme,
   crmTheme,
   adminTheme,
+  shopTheme,
   themes,
   generateThemeCSS,
 } from './themes';

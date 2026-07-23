@@ -1,0 +1,316 @@
+generator client {
+  provider = "prisma-client-js"
+  // Generated locally rather than into the shared @prisma/client location:
+  // @ronda/db and @ronda/shop-db both depend on the exact same @prisma/client
+  // version, and pnpm hard-links identical versions to one physical store
+  // entry — generating either schema's client into the default location
+  // would silently overwrite the other's.
+  output = "./generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("SHOP_DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Language {
+  ar
+  en
+}
+
+enum ProductSourceType {
+  MANUAL
+  G2A
+}
+
+enum DeliveryType {
+  TEXT
+  FILE
+  KEYS
+}
+
+enum OrderType {
+  PRODUCT
+  SMM
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PROCESSING
+  DELIVERED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
+enum CouponKind {
+  REGULAR
+  AFFILIATE
+}
+
+enum AffiliateEarningStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+}
+
+// ─── Admin ─────────────────────────────────────────────────────────────────────
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  passwordHash String
+  role         AdminRole @default(ADMIN)
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@map("admin_users")
+}
+
+model ShopSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("shop_settings")
+}
+
+// ─── Catalog: Digital Products ─────────────────────────────────────────────────
+
+model Category {
+  id        String    @id @default(cuid())
+  nameAr    String
+  nameEn    String
+  sortOrder Int       @default(0)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+
+  products Product[]
+
+  @@map("shop_categories")
+}
+
+model Product {
+  id              String            @id @default(cuid())
+  categoryId      String?
+  nameAr          String
+  nameEn          String
+  descriptionAr   String?
+  descriptionEn   String?
+  sourceType      ProductSourceType @default(MANUAL)
+  externalRef     String?
+  costMinor       Int
+  currency        String            @default("USD")
+  profitPercent   Float?
+  deliveryType    DeliveryType      @default(TEXT)
+  deliveryContent String?
+  fileUrl         String?
+  isActive        Boolean           @default(true)
+  sortOrder       Int               @default(0)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  category Category?    @relation(fields: [categoryId], references: [id])
+  keys     ProductKey[]
+  orders   Order[]
+
+  @@index([categoryId])
+  @@map("shop_products")
+}
+
+model ProductKey {
+  id            String    @id @default(cuid())
+  productId     String
+  value         String
+  isUsed        Boolean   @default(false)
+  usedInOrderId String?
+  createdAt     DateTime  @default(now())
+  usedAt        DateTime?
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, isUsed])
+  @@map("shop_product_keys")
+}
+
+// ─── Catalog: SMM Services ──────────────────────────────────────────────────────
+
+model SmmProvider {
+  id        String   @id @default(cuid())
+  name      String
+  baseUrl   String
+  apiKey    String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  services SmmService[]
+
+  @@map("smm_providers")
+}
+
+model SmmCategory {
+  id        String   @id @default(cuid())
+  nameAr    String
+  nameEn    String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+
+  services SmmService[]
+
+  @@map("smm_categories")
+}
+
+model SmmService {
+  id                String       @id @default(cuid())
+  providerId        String
+  categoryId        String?
+  nameAr            String
+  nameEn            String
+  platform          String
+  type              String
+  providerServiceId String
+  costPer1000Minor  Int
+  currency          String       @default("USD")
+  profitPercent     Float?
+  minQuantity       Int          @default(100)
+  maxQuantity       Int          @default(10000)
+  isActive          Boolean      @default(true)
+  sortOrder         Int          @default(0)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  provider SmmProvider   @relation(fields: [providerId], references: [id])
+  category SmmCategory?  @relation(fields: [categoryId], references: [id])
+  orders   Order[]
+
+  @@index([providerId])
+  @@index([categoryId])
+  @@map("smm_services")
+}
+
+// ─── Customers ──────────────────────────────────────────────────────────────────
+
+model ShopUser {
+  id           String   @id @default(cuid())
+  telegramId   String   @unique
+  username     String?
+  firstName    String?
+  languageCode Language @default(ar)
+  referredBy   String?
+  isBlocked    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("shop_users")
+}
+
+// ─── Coupons & Affiliates ───────────────────────────────────────────────────────
+
+model Coupon {
+  id                         String     @id @default(cuid())
+  code                       String     @unique
+  kind                       CouponKind @default(REGULAR)
+  type                       CouponType
+  value                      Float
+  ownerTelegramId            String?
+  affiliateCommissionPercent Float?
+  usageLimit                 Int?
+  usedCount                  Int        @default(0)
+  perUserLimit                Int?      @default(1)
+  minOrderStars              Int?
+  expiresAt                  DateTime?
+  isActive                   Boolean    @default(true)
+  createdAt                  DateTime   @default(now())
+  updatedAt                  DateTime   @updatedAt
+
+  redemptions CouponRedemption[]
+  earnings    AffiliateEarning[]
+  orders      Order[]
+
+  @@map("shop_coupons")
+}
+
+model CouponRedemption {
+  id             String   @id @default(cuid())
+  couponId       String
+  telegramUserId String
+  orderId        String   @unique
+  discountStars  Int
+  createdAt      DateTime @default(now())
+
+  coupon Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  order  Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([couponId, telegramUserId])
+  @@map("shop_coupon_redemptions")
+}
+
+model AffiliateEarning {
+  id                  String                 @id @default(cuid())
+  affiliateTelegramId String
+  orderId             String                 @unique
+  couponId            String
+  amountStars         Int
+  status              AffiliateEarningStatus @default(PENDING)
+  createdAt           DateTime               @default(now())
+  paidAt              DateTime?
+
+  coupon Coupon @relation(fields: [couponId], references: [id])
+  order  Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([affiliateTelegramId])
+  @@map("shop_affiliate_earnings")
+}
+
+// ─── Orders ─────────────────────────────────────────────────────────────────────
+
+model Order {
+  id                      String      @id @default(cuid())
+  telegramUserId          String
+  type                    OrderType
+  productId               String?
+  smmServiceId            String?
+  smmLink                 String?
+  quantity                Int         @default(1)
+  unitPriceStars          Int
+  subtotalStars           Int
+  discountStars           Int         @default(0)
+  totalStars              Int
+  couponId                String?
+  costMinor               Int         @default(0)
+  profitMinor             Int?
+  status                  OrderStatus @default(PENDING_PAYMENT)
+  telegramPaymentChargeId String?
+  providerOrderId         String?
+  deliveredContent        String?
+  deliveredFileUrl        String?
+  failureReason           String?
+  createdAt               DateTime    @default(now())
+  paidAt                  DateTime?
+  deliveredAt             DateTime?
+
+  product          Product?          @relation(fields: [productId], references: [id])
+  smmService       SmmService?       @relation(fields: [smmServiceId], references: [id])
+  coupon           Coupon?           @relation(fields: [couponId], references: [id])
+  couponRedemption CouponRedemption?
+  affiliateEarning AffiliateEarning?
+
+  @@index([telegramUserId])
+  @@index([status])
+  @@map("shop_orders")
+}
