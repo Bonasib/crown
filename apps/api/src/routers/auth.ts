@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { createHash } from 'crypto';
+import { createHash, randomBytes, timingSafeEqual } from 'crypto';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '@ronda/db';
 import { router, publicProcedure } from '../trpc';
@@ -10,8 +11,28 @@ const JWT_SECRET = process.env['JWT_SECRET'] ?? 'dev_secret_change_in_production
 const JWT_EXPIRES_IN = '15m';
 const REFRESH_EXPIRES_DAYS = 30;
 
-function hashPassword(password: string): string {
+const BCRYPT_ROUNDS = 12;
+// Compared against when the email is unknown, so response time doesn't reveal which emails exist.
+const DUMMY_HASH = bcrypt.hashSync('dummy-password', BCRYPT_ROUNDS);
+
+function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, BCRYPT_ROUNDS);
+}
+
+// Unsalted-per-user SHA-256 used before bcrypt (still written by prisma/seed.ts).
+function legacyHash(password: string): string {
   return createHash('sha256').update(password + 'salt_ronda_2024').digest('hex');
+}
+
+function isBcryptHash(hash: string): boolean {
+  return hash.startsWith('$2');
+}
+
+async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  if (isBcryptHash(hash)) return bcrypt.compare(password, hash);
+  const a = Buffer.from(legacyHash(password));
+  const b = Buffer.from(hash);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 function generateTokens(user: { id: string; email: string; roles: UserRole[]; orgId: string | null }): AuthTokens {
@@ -23,9 +44,7 @@ function generateTokens(user: { id: string; email: string; roles: UserRole[]; or
   };
 
   const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-  const refreshToken = createHash('sha256')
-    .update(`${user.id}${Date.now()}${Math.random()}`)
-    .digest('hex');
+  const refreshToken = randomBytes(32).toString('hex');
 
   return { accessToken, refreshToken, expiresIn: 900 };
 }
@@ -49,12 +68,8 @@ export const authRouter = router({
         },
       });
 
-      if (!user || !user.isActive) {
-        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid credentials' });
-      }
-
-      const passwordHash = hashPassword(input.password);
-      if (user.passwordHash !== passwordHash) {
+      const passwordOk = await verifyPassword(input.password, user?.passwordHash ?? DUMMY_HASH);
+      if (!user || !user.isActive || !passwordOk) {
         throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid credentials' });
       }
 
@@ -94,10 +109,15 @@ export const authRouter = router({
         },
       });
 
-      // Update last login
+      // Update last login, upgrading a legacy hash now that we know the password
       await prisma.user.update({
         where: { id: user.id },
-        data: { lastLoginAt: new Date() },
+        data: {
+          lastLoginAt: new Date(),
+          ...(isBcryptHash(user.passwordHash)
+            ? {}
+            : { passwordHash: await hashPassword(input.password) }),
+        },
       });
 
       return {

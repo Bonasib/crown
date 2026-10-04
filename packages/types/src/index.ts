@@ -106,7 +106,8 @@ export interface PackingPlan {
 // ─── Compliance ────────────────────────────────────────────────────────────────
 export interface ComplianceRequirement {
   id: string;
-  market: Market;
+  /** Omitted for rules that apply to every market (e.g. goods-type rules). */
+  market?: Market;
   goodsType?: GoodsType;
   documentType: DocumentType;
   description: string;

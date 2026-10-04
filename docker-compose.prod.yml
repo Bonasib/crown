@@ -1,0 +1,152 @@
+# Production stack for a single VPS. Run via deploy/deploy.sh, which passes
+# --env-file .env.production (see .env.production.example).
+#
+# Only Caddy publishes ports (80/443). Postgres, Redis and the apps are reachable
+# solely on the internal Docker network.
+
+x-node-build: &node-build
+  context: .
+  dockerfile: deploy/Dockerfile
+  args: &web-args
+    NEXT_PUBLIC_API_URL: https://api.${DOMAIN:?set DOMAIN in .env.production}
+    NEXT_PUBLIC_APP_URL: https://${DOMAIN}
+
+x-backend-env: &backend-env
+  NODE_ENV: production
+  DATABASE_URL: postgresql://ronda:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/ronda_ship
+  REDIS_URL: redis://redis:6379
+  JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+  JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?set JWT_REFRESH_SECRET}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web-saas
+      - web-erp
+      - web-crm
+      - web-admin
+      - api
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ronda
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ronda_ship
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ronda -d ronda_ship']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: ronda/api
+    build:
+      <<: *node-build
+      args:
+        <<: *web-args
+        APP: api
+    restart: unless-stopped
+    environment:
+      <<: *backend-env
+      PORT: 4000
+      HOST: 0.0.0.0
+      CORS_ORIGINS: https://${DOMAIN},https://erp.${DOMAIN},https://crm.${DOMAIN},https://admin.${DOMAIN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    image: ronda/worker
+    build:
+      <<: *node-build
+      args:
+        <<: *web-args
+        APP: worker
+    restart: unless-stopped
+    environment: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web-saas:
+    image: ronda/web-saas
+    build:
+      <<: *node-build
+      args:
+        <<: *web-args
+        APP: web-saas
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+
+  web-erp:
+    image: ronda/web-erp
+    build:
+      <<: *node-build
+      args:
+        <<: *web-args
+        APP: web-erp
+    restart: unless-stopped
+    environment:
+      PORT: 3001
+
+  web-crm:
+    image: ronda/web-crm
+    build:
+      <<: *node-build
+      args:
+        <<: *web-args
+        APP: web-crm
+    restart: unless-stopped
+    environment:
+      PORT: 3002
+
+  web-admin:
+    image: ronda/web-admin
+    build:
+      <<: *node-build
+      args:
+        <<: *web-args
+        APP: web-admin
+    restart: unless-stopped
+    environment:
+      PORT: 3003
+
+volumes:
+  postgres_data:
+  redis_data:
+  caddy_data:
+  caddy_config:

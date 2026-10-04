@@ -18,9 +18,10 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
-    "@types/node": "^22.0.0",
+    "@ronda/config": "workspace:^",
     "@ronda/types": "workspace:*",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
     "vitest": "^2.1.0"
   }
 }

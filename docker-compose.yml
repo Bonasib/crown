@@ -39,7 +39,10 @@ services:
   api:
     build:
       context: .
-      dockerfile: apps/api/Dockerfile
+      dockerfile: deploy/Dockerfile
+      args:
+        APP: api
+        NEXT_PUBLIC_API_URL: http://localhost:4000
     container_name: ronda-api
     restart: unless-stopped
     environment:
@@ -61,7 +64,10 @@ services:
   worker:
     build:
       context: .
-      dockerfile: apps/worker/Dockerfile
+      dockerfile: deploy/Dockerfile
+      args:
+        APP: worker
+        NEXT_PUBLIC_API_URL: http://localhost:4000
     container_name: ronda-worker
     restart: unless-stopped
     environment:
@@ -78,7 +84,10 @@ services:
   web-saas:
     build:
       context: .
-      dockerfile: apps/web-saas/Dockerfile
+      dockerfile: deploy/Dockerfile
+      args:
+        APP: web-saas
+        NEXT_PUBLIC_API_URL: http://localhost:4000
     container_name: ronda-web-saas
     restart: unless-stopped
     environment:
@@ -92,7 +101,10 @@ services:
   web-erp:
     build:
       context: .
-      dockerfile: apps/web-erp/Dockerfile
+      dockerfile: deploy/Dockerfile
+      args:
+        APP: web-erp
+        NEXT_PUBLIC_API_URL: http://localhost:4000
     container_name: ronda-web-erp
     restart: unless-stopped
     environment:
@@ -106,7 +118,10 @@ services:
   web-crm:
     build:
       context: .
-      dockerfile: apps/web-crm/Dockerfile
+      dockerfile: deploy/Dockerfile
+      args:
+        APP: web-crm
+        NEXT_PUBLIC_API_URL: http://localhost:4000
     container_name: ronda-web-crm
     restart: unless-stopped
     environment:
@@ -120,7 +135,10 @@ services:
   web-admin:
     build:
       context: .
-      dockerfile: apps/web-admin/Dockerfile
+      dockerfile: deploy/Dockerfile
+      args:
+        APP: web-admin
+        NEXT_PUBLIC_API_URL: http://localhost:4000
     container_name: ronda-web-admin
     restart: unless-stopped
     environment:

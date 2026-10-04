@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
-import { fastifyTRPCPlugin } from '@trpc/server/adapters/fastify';
+import { fastifyTRPCPlugin, type CreateFastifyContextOptions } from '@trpc/server/adapters/fastify';
 import { appRouter } from './routers';
 import { verifyToken, extractTokenFromHeader } from './middleware/auth';
 
@@ -40,7 +40,7 @@ async function bootstrap() {
     prefix: '/trpc',
     trpcOptions: {
       router: appRouter,
-      createContext: async ({ req }) => {
+      createContext: async ({ req }: CreateFastifyContextOptions) => {
         const token = extractTokenFromHeader(req.headers.authorization);
         const user = token ? verifyToken(token) : null;
         const orgId = req.headers['x-org-id'] as string | undefined;
