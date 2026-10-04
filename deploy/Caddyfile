@@ -1,0 +1,29 @@
+# Caddy obtains and renews HTTPS certificates automatically.
+# Every hostname below needs a DNS A record pointing at the VPS.
+{
+	email {$ACME_EMAIL}
+}
+
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}
+
+{$DOMAIN} {
+	reverse_proxy web-saas:3000
+}
+
+erp.{$DOMAIN} {
+	reverse_proxy web-erp:3001
+}
+
+crm.{$DOMAIN} {
+	reverse_proxy web-crm:3002
+}
+
+admin.{$DOMAIN} {
+	reverse_proxy web-admin:3003
+}
+
+api.{$DOMAIN} {
+	reverse_proxy api:4000
+}
