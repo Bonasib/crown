@@ -16,6 +16,17 @@ Postgres and Redis are not exposed outside the Docker network.
 
 ## First deploy
 
+Quickest: on a fresh Ubuntu VPS, as root, run
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Bonasib/crown/claude/festive-brahmagupta-08tfzr/deploy/install.sh | bash
+```
+
+It installs Docker, clones the repo to `/opt/crown`, generates secrets, deploys,
+and reports which DNS records are still missing. Re-run it to update.
+
+Manual steps:
+
 1. **DNS.** Create an `A` record for `@`, `www`, `erp`, `crm`, `admin` and `api`,
    each pointing at the VPS IPv4 address. Caddy can only get certificates once
    these resolve.

@@ -15,7 +15,8 @@ fi
 
 compose() { docker compose --env-file .env.production -f docker-compose.prod.yml "$@"; }
 
-compose build
+# One image at a time: parallel Next.js builds can exhaust memory on a small VPS.
+for svc in api worker web-saas web-erp web-crm web-admin; do compose build "$svc"; done
 compose up -d --wait postgres redis
 # The repo has no Prisma migrations yet, so the schema is pushed directly.
 compose run --rm --no-deps -w /app/packages/db api pnpm exec prisma db push --skip-generate
