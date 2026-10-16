@@ -12,6 +12,7 @@ A modern freight-forwarding platform for China-to-MENA/US shipments. Phase 0 fou
 | `web-admin` | 3003 | Deep Purple | Super admin — orgs, users, feature flags |
 | `api` | 4000 | — | tRPC + Fastify backend |
 | `worker` | — | — | BullMQ background jobs |
+| `web-studio` | 3010 | Violet | Wilo AI — AI video/image/ad studio ([README](apps/web-studio/README.md)) |
 
 ## Prerequisites
 
